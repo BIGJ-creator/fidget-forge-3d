@@ -153,6 +153,13 @@ textarea{min-height:90px}.order{width:100%;border:0;background:var(--accent);col
 <button class="swatch" style="background:#80838a" onclick="pickCustom('switch2','Gray',this)"></button>
 </div>
 
+<div class="colorname">Size: <span id="customSize">Small</span> — $<span id="customPrice">6.00</span></div>
+<div class="colors">
+  <button class="swatch selected" onclick="pickSize('Small',6,this)">Small — $6</button>
+  <button class="swatch" onclick="pickSize('Medium',7,this)">Medium — $7</button>
+  <button class="swatch" onclick="pickSize('Large',8,this)">Large — $8</button>
+</div>
+
 <button class="buy" onclick="addCustom()">Add to cart</button></article>
   </div>
 </div>
