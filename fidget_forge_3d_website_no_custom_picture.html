@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fidget Forge 3D</title>
+<style>
+:root{--bg:#0b0b12;--card:#151522;--text:#f7f7fb;--muted:#a9a9bb;--accent:#8b5cf6;--accent2:#22d3ee;--border:#29293a}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:linear-gradient(180deg,#0b0b12,#11111c);color:var(--text)}
+a{color:inherit;text-decoration:none}.container{max-width:1100px;margin:auto;padding:0 20px}
+nav{position:sticky;top:0;z-index:10;background:rgba(11,11,18,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+.navin{height:70px;display:flex;align-items:center;justify-content:space-between}
+.logo{font-size:22px;font-weight:900}.logo span{color:var(--accent2)}
+.navlinks{display:flex;gap:24px;color:var(--muted);font-weight:700}
+.cartbtn{border:1px solid var(--border);background:var(--card);color:white;border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer}
+.hero{padding:90px 0 70px;text-align:center}
+.badge{display:inline-block;background:#1c1730;color:#c4b5fd;border:1px solid #3a2b65;border-radius:999px;padding:8px 14px;font-weight:800;font-size:13px}
+h1{font-size:clamp(44px,8vw,78px);line-height:.98;margin:22px 0 18px;letter-spacing:-3px}
+.gradient{background:linear-gradient(90deg,#a78bfa,#22d3ee);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{max-width:650px;margin:0 auto 30px;color:var(--muted);font-size:18px;line-height:1.6}
+.cta{display:inline-block;background:var(--accent);padding:14px 22px;border-radius:13px;font-weight:900;box-shadow:0 10px 30px rgba(139,92,246,.25)}
+section{padding:55px 0}h2{text-align:center;font-size:34px;margin:0 0 12px}.sectionsub{text-align:center;color:var(--muted);margin:0 auto 35px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:20px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:20px;overflow:hidden}
+.product-img{height:210px;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 35%,#30284d,#171722 65%);font-size:70px}
+.cardbody{padding:18px}.card h3{margin:0 0 7px;font-size:20px}.desc{color:var(--muted);font-size:14px;min-height:42px}.price{font-size:22px;font-weight:900;margin:15px 0}
+.colors{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 2px}
+.swatch{width:28px;height:28px;border-radius:50%;border:2px solid #3b3b4c;cursor:pointer}
+.swatch.selected{border-color:white;box-shadow:0 0 0 2px #8b5cf6}
+.colorname{font-size:13px;color:#a9a9bb;margin:5px 0 8px}
+.buy{width:100%;padding:12px;border:0;border-radius:11px;background:white;color:#101018;font-weight:900;cursor:pointer}
+.info{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px}
+.info div{background:#12121d;border:1px solid var(--border);border-radius:16px;padding:22px}.info b{display:block;margin-bottom:8px}.info p{color:var(--muted);margin:0;line-height:1.5}
+footer{border-top:1px solid var(--border);padding:35px 0;color:var(--muted);text-align:center;margin-top:30px}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:20;align-items:center;justify-content:center;padding:20px}
+.modal.open{display:flex}.modalbox{width:min(520px,100%);background:#151522;border:1px solid var(--border);border-radius:20px;padding:24px}
+.modalhead{display:flex;justify-content:space-between;align-items:center}.close{background:none;border:0;color:white;font-size:25px;cursor:pointer}
+input,textarea{width:100%;margin:7px 0 12px;padding:12px;border-radius:10px;border:1px solid var(--border);background:#0d0d15;color:white;font:inherit}
+textarea{min-height:90px}.order{width:100%;border:0;background:var(--accent);color:white;padding:13px;border-radius:11px;font-weight:900;cursor:pointer}
+.small{font-size:12px;color:var(--muted);line-height:1.5}
+@media(max-width:650px){.navlinks{display:none}.hero{padding-top:65px}h1{letter-spacing:-2px}}
+</style>
+</head>
+<body>
+<nav>
+  <div class="container navin">
+    <a class="logo" href="#">Fidget<span>Forge</span> 3D</a>
+    <div class="navlinks"><a href="#shop">Shop</a><a href="#why">Why us</a><a href="#order">Order</a></div>
+    <button class="cartbtn" onclick="openCart()">🛒 Cart (<span id="count">0</span>)</button>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="container">
+    <span class="badge">3D PRINTED • MADE TO ORDER</span>
+    <h1>Fidgets that are<br><span class="gradient">fun to click.</span></h1>
+    <p>Cool, satisfying 3D-printed fidgets made in different colors and designs. Pick your favorites and build your collection.</p>
+    <a class="cta" href="#shop">Shop Fidgets →</a>
+  </div>
+</header>
+
+<section id="shop">
+<div class="container">
+  <h2>Shop the collection</h2>
+  <p class="sectionsub">More designs can be added as the business grows.</p>
+  <div class="grid">
+    <article class="card">
+      
+      <div class="cardbody"><h3>Keyboard Clicker</h3><p class="desc">A compact, satisfying button fidget.</p><div class="price">$5.00</div><div class="colorname">Color: <span id="color1">White</span></div>
+<div class="colors">
+<button class="swatch selected" style="background:#f5f5f5" title="White" onclick="pick(1,'White',this)"></button>
+<button class="swatch" style="background:#ff6a00" title="Orange" onclick="pick(1,'Orange',this)"></button>
+<button class="swatch" style="background:#ffd21c" title="Yellow" onclick="pick(1,'Yellow',this)"></button>
+<button class="swatch" style="background:#e62929" title="Red" onclick="pick(1,'Red',this)"></button>
+<button class="swatch" style="background:#ff5f73" title="Pink" onclick="pick(1,'Pink',this)"></button>
+<button class="swatch" style="background:#18a86b" title="Green" onclick="pick(1,'Green',this)"></button>
+<button class="swatch" style="background:#1677d2" title="Blue" onclick="pick(1,'Blue',this)"></button>
+<button class="swatch" style="background:#80838a" title="Gray" onclick="pick(1,'Gray',this)"></button>
+</div>
+<button class="buy" onclick="addProduct('Keyboard Clicker',5,1)">Add to cart</button></div>
+    </article>
+    <article class="card">
+      <div class="product-img">🌀</div>
+      <div class="cardbody"><h3>Infinity Fidget</h3><p class="desc">Smooth movement in a pocket-sized design.</p><div class="price">$6.00</div><div class="colorname">Color: <span id="color2">White</span></div>
+<div class="colors">
+<button class="swatch selected" style="background:#f5f5f5" title="White" onclick="pick(2,'White',this)"></button>
+<button class="swatch" style="background:#ff6a00" title="Orange" onclick="pick(2,'Orange',this)"></button>
+<button class="swatch" style="background:#ffd21c" title="Yellow" onclick="pick(2,'Yellow',this)"></button>
+<button class="swatch" style="background:#e62929" title="Red" onclick="pick(2,'Red',this)"></button>
+<button class="swatch" style="background:#ff5f73" title="Pink" onclick="pick(2,'Pink',this)"></button>
+<button class="swatch" style="background:#18a86b" title="Green" onclick="pick(2,'Green',this)"></button>
+<button class="swatch" style="background:#1677d2" title="Blue" onclick="pick(2,'Blue',this)"></button>
+<button class="swatch" style="background:#80838a" title="Gray" onclick="pick(2,'Gray',this)"></button>
+</div>
+<button class="buy" onclick="addProduct('Infinity Fidget',6,2)">Add to cart</button></div>
+    </article>
+    <article class="card">
+      <div class="product-img">🐍</div>
+      <div class="cardbody"><h3>Flexi Fidget</h3><p class="desc">A fun articulated print that moves in your hand.</p><div class="price">$7.00</div><div class="colorname">Color: <span id="color3">White</span></div>
+<div class="colors">
+<button class="swatch selected" style="background:#f5f5f5" title="White" onclick="pick(3,'White',this)"></button>
+<button class="swatch" style="background:#ff6a00" title="Orange" onclick="pick(3,'Orange',this)"></button>
+<button class="swatch" style="background:#ffd21c" title="Yellow" onclick="pick(3,'Yellow',this)"></button>
+<button class="swatch" style="background:#e62929" title="Red" onclick="pick(3,'Red',this)"></button>
+<button class="swatch" style="background:#ff5f73" title="Pink" onclick="pick(3,'Pink',this)"></button>
+<button class="swatch" style="background:#18a86b" title="Green" onclick="pick(3,'Green',this)"></button>
+<button class="swatch" style="background:#1677d2" title="Blue" onclick="pick(3,'Blue',this)"></button>
+<button class="swatch" style="background:#80838a" title="Gray" onclick="pick(3,'Gray',this)"></button>
+</div>
+<button class="buy" onclick="addProduct('Flexi Fidget',7,3)">Add to cart</button></div>
+    </article>
+    <article class="card">
+      
+      <div style="height:210px;overflow:hidden;background:#171722"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA3MDAgNDMwIj4KPGRlZnM+CjxsaW5lYXJHcmFkaWVudCBpZD0iZyIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPjxzdG9wIHN0b3AtY29sb3I9IiMzMDI4NGQiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiMxNTE1MjIiLz48L2xpbmVhckdyYWRpZW50Pgo8ZmlsdGVyIGlkPSJzIj48ZmVEcm9wU2hhZG93IGR4PSIwIiBkeT0iMTIiIHN0ZERldmlhdGlvbj0iMTAiIGZsb29kLW9wYWNpdHk9Ii40Ii8+PC9maWx0ZXI+CjwvZGVmcz4KPHJlY3Qgd2lkdGg9IjcwMCIgaGVpZ2h0PSI0MzAiIHJ4PSIzMCIgZmlsbD0idXJsKCNnKSIvPgo8ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxMDUgNzApIHJvdGF0ZSgtNCAyNDUgMTQwKSIgZmlsdGVyPSJ1cmwoI3MpIj4KPHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjQ5MCIgaGVpZ2h0PSIyODAiIHJ4PSIzOCIgZmlsbD0iIzhiNWNmNiIgc3Ryb2tlPSIjYjlhMGZmIiBzdHJva2Utd2lkdGg9IjUiLz4KPHJlY3QgeD0iMjUiIHk9IjI1IiB3aWR0aD0iNDQwIiBoZWlnaHQ9IjIzMCIgcng9IjI4IiBmaWxsPSIjMjQyNDMzIi8+CjxyZWN0IHg9Ijc1IiB5PSI2NSIgd2lkdGg9IjEyNSIgaGVpZ2h0PSIxMjUiIHJ4PSIyNCIgZmlsbD0iIzIyZDNlZSIgc3Ryb2tlPSIjMGMxMDE4IiBzdHJva2Utd2lkdGg9IjkiLz4KPHJlY3QgeD0iMjkwIiB5PSI2NSIgd2lkdGg9IjEyNSIgaGVpZ2h0PSIxMjUiIHJ4PSIyNCIgZmlsbD0iI2ZmN2EwMCIgc3Ryb2tlPSIjMGMxMDE4IiBzdHJva2Utd2lkdGg9IjkiLz4KPGNpcmNsZSBjeD0iMTM3IiBjeT0iMjI1IiByPSIxMCIgZmlsbD0iIzIyZDNlZSIvPjxjaXJjbGUgY3g9IjM1MyIgY3k9IjIyNSIgcj0iMTAiIGZpbGw9IiNmZjdhMDAiLz4KPHJlY3QgeD0iNDQ1IiB5PSIyMCIgd2lkdGg9IjMwIiBoZWlnaHQ9IjMwIiByeD0iOCIgZmlsbD0iI2RkZCIvPgo8L2c+Cjx0ZXh0IHg9IjM1MCIgeT0iMzk1IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZm9udC1mYW1pbHk9IkFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjQiIGZvbnQtd2VpZ2h0PSI3MDAiPkN1c3RvbSBLZXljaGFpbiDigKIgUGljayAzIENvbG9yczwvdGV4dD4KPC9zdmc+" alt="Custom Keychain keyboard fidget in different colors" style="width:100%;height:100%;object-fit:cover"></div>
+
+<div class="colorname">Base color: <span id="baseColor">White</span></div>
+<div class="colors">
+<button class="swatch selected" style="background:#f5f5f5" onclick="pickCustom('base','White',this)"></button>
+<button class="swatch" style="background:#111" onclick="pickCustom('base','Black',this)"></button>
+<button class="swatch" style="background:#8b5cf6" onclick="pickCustom('base','Purple',this)"></button>
+<button class="swatch" style="background:#1677d2" onclick="pickCustom('base','Blue',this)"></button>
+<button class="swatch" style="background:#18a86b" onclick="pickCustom('base','Green',this)"></button>
+<button class="swatch" style="background:#ff7a00" onclick="pickCustom('base','Orange',this)"></button>
+<button class="swatch" style="background:#e62929" onclick="pickCustom('base','Red',this)"></button>
+<button class="swatch" style="background:#ff6fa0" onclick="pickCustom('base','Pink',this)"></button>
+<button class="swatch" style="background:#80838a" onclick="pickCustom('base','Gray',this)"></button>
+</div>
+
+<div class="colorname">Switch 1 (top): <span id="switch1Color">White</span></div>
+<div class="colors">
+<button class="swatch selected" style="background:#f5f5f5" onclick="pickCustom('switch1','White',this)"></button>
+<button class="swatch" style="background:#111" onclick="pickCustom('switch1','Black',this)"></button>
+<button class="swatch" style="background:#8b5cf6" onclick="pickCustom('switch1','Purple',this)"></button>
+<button class="swatch" style="background:#1677d2" onclick="pickCustom('switch1','Blue',this)"></button>
+<button class="swatch" style="background:#18a86b" onclick="pickCustom('switch1','Green',this)"></button>
+<button class="swatch" style="background:#ff7a00" onclick="pickCustom('switch1','Orange',this)"></button>
+<button class="swatch" style="background:#e62929" onclick="pickCustom('switch1','Red',this)"></button>
+<button class="swatch" style="background:#ff6fa0" onclick="pickCustom('switch1','Pink',this)"></button>
+<button class="swatch" style="background:#80838a" onclick="pickCustom('switch1','Gray',this)"></button>
+</div>
+
+<div class="colorname">Switch 2 (bottom): <span id="switch2Color">White</span></div>
+<div class="colors">
+<button class="swatch selected" style="background:#f5f5f5" onclick="pickCustom('switch2','White',this)"></button>
+<button class="swatch" style="background:#111" onclick="pickCustom('switch2','Black',this)"></button>
+<button class="swatch" style="background:#8b5cf6" onclick="pickCustom('switch2','Purple',this)"></button>
+<button class="swatch" style="background:#1677d2" onclick="pickCustom('switch2','Blue',this)"></button>
+<button class="swatch" style="background:#18a86b" onclick="pickCustom('switch2','Green',this)"></button>
+<button class="swatch" style="background:#ff7a00" onclick="pickCustom('switch2','Orange',this)"></button>
+<button class="swatch" style="background:#e62929" onclick="pickCustom('switch2','Red',this)"></button>
+<button class="swatch" style="background:#ff6fa0" onclick="pickCustom('switch2','Pink',this)"></button>
+<button class="swatch" style="background:#80838a" onclick="pickCustom('switch2','Gray',this)"></button>
+</div>
+
+<button class="buy" onclick="addCustom()">Add to cart</button></article>
+  </div>
+</div>
+</section>
+
+<section id="why">
+<div class="container">
+<h2>Why Fidget Forge?</h2>
+<p class="sectionsub">Small prints. Big fun.</p>
+<div class="info">
+<div><b>🎨 Lots of colors</b><p>Offer different filament colors so customers can choose their favorite.</p></div>
+<div><b>🖨️ 3D printed</b><p>Each item is produced as a physical 3D print rather than mass-produced.</p></div>
+<div><b>📦 Simple ordering</b><p>Customers can add items to a cart and send an order request.</p></div>
+</div>
+</div>
+</section>
+
+<section id="order">
+<div class="container">
+<h2>Want something custom?</h2>
+<p class="sectionsub">Send an order request and you can work out the details with the customer.</p>
+<div style="text-align:center"><button class="cta" onclick="openCart()">Start an order</button></div>
+</div>
+</section>
+
+<footer><div class="container">© 2026 Fidget Forge 3D • 3D printed fidgets</div></footer>
+
+<div class="modal" id="modal">
+<div class="modalbox">
+<div class="modalhead"><h2 style="margin:0;text-align:left">Your order</h2><button class="close" onclick="closeCart()">×</button></div>
+<div id="cartItems" style="margin:18px 0"></div>
+<div style="font-size:20px;font-weight:900;margin-bottom:15px">Total: $<span id="total">0.00</span></div>
+<input id="name" placeholder="Your name">
+<input id="contact" placeholder="Parent/guardian contact or email">
+<textarea id="notes" placeholder="Colors, quantities, or custom requests"></textarea>
+<button class="order" onclick="submitOrder()">Send order request</button>
+<p class="small">This demo does not process payments. Add your real contact/payment setup before launching publicly. If you're under 18, have a parent/guardian handle business/payment accounts.</p>
+</div>
+</div>
+
+<script>
+let cart=[];
+let selectedColors={1:'White',2:'White',3:'White'};
+let customColors={base:'White',switch1:'White',switch2:'White'};
+function pick(id,color,el){
+  selectedColors[id]=color;
+  document.getElementById('color'+id).textContent=color;
+  el.parentElement.querySelectorAll('.swatch').forEach(s=>s.classList.remove('selected'));
+  el.classList.add('selected');
+}
+function addProduct(name,price,id){
+  cart.push({name,price,color:selectedColors[id]});
+  document.getElementById('count').textContent=cart.length;
+}
+function pickCustom(part,color,el){
+  customColors[part]=color;
+  const label=part==='base'?'baseColor':(part==='switch1'?'switch1Color':'switch2Color');
+  document.getElementById(label).textContent=color;
+  el.parentElement.querySelectorAll('.swatch').forEach(s=>s.classList.remove('selected'));
+  el.classList.add('selected');
+}
+function addCustom(){
+  cart.push({
+    name:'Custom Keychain',
+    price:4,
+    color:'Base: '+customColors.base+', Switch 1: '+customColors.switch1+', Switch 2: '+customColors.switch2
+  });
+  document.getElementById('count').textContent=cart.length;
+}
+function openCart(){
+ document.getElementById('modal').classList.add('open');
+ let box=document.getElementById('cartItems');
+ if(!cart.length){box.innerHTML='<p style="color:#a9a9bb">Your cart is empty.</p>'}
+ else{box.innerHTML=cart.map((x,i)=>`<div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #29293a"><span>${x.name}<small style="display:block;color:#a9a9bb">Color: ${x.color}</small></span><span>$${x.price.toFixed(2)} <button onclick="removeItem(${i})" style="margin-left:8px;background:none;border:0;color:#f87171;cursor:pointer">Remove</button></span></div>`).join('')}
+ document.getElementById('total').textContent=cart.reduce((s,x)=>s+x.price,0).toFixed(2)
+}
+function removeItem(i){cart.splice(i,1);document.getElementById('count').textContent=cart.length;openCart()}
+function closeCart(){document.getElementById('modal').classList.remove('open')}
+function submitOrder(){
+ if(!cart.length){alert('Add something to your cart first!');return}
+ const name=document.getElementById('name').value.trim();
+ if(!name){alert('Please enter your name.');return}
+ const summary=cart.map(x=>x.name+' ('+x.color+')').join(', ');
+ alert('Order request ready!\\n\\nCustomer: '+name+'\\nItems: '+summary+'\\nTotal: $'+cart.reduce((s,x)=>s+x.price,0).toFixed(2)+'\\n\\nConnect this button to your real order/contact system before launching.');
+}
+</script>
+</body>
+</html>
