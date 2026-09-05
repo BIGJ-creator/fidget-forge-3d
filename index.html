@@ -269,15 +269,55 @@ function removeItem(i){cart.splice(i,1);updateCart()}
 function openCart(){updateCart();document.getElementById("cartModal").classList.add("open")}
 function closeCart(){document.getElementById("cartModal").classList.remove("open")}
 
-function placeOrder(){
-  if(!cart.length){alert("Your cart is empty.");return}
-  const name=document.getElementById("customerName").value.trim();
-  const email=document.getElementById("customerEmail").value.trim();
-  if(!name||!email){alert("Please enter your name and email.");return}
-  const order=cart.map(x=>`${x.name} - $${x.price.toFixed(2)} - ${x.color}`).join("\\n");
-  const notes=document.getElementById("customerNotes").value.trim();
-  const message=`Order request for ${name}\\nEmail: ${email}\\n\\n${order}\\n\\nTotal: $${cart.reduce((s,x)=>s+x.price,0).toFixed(2)}\\nNotes: ${notes}`;
-  alert("Order request ready!\\n\\n"+message);
+async function placeOrder(){
+  if(!cart.length){
+    alert("Your cart is empty.");
+    return;
+  }
+
+  const name = document.getElementById("customerName").value.trim();
+  const email = document.getElementById("customerEmail").value.trim();
+  const notes = document.getElementById("customerNotes").value.trim();
+
+  if(!name || !email){
+    alert("Please enter your name and email.");
+    return;
+  }
+
+  try {
+    const response = await fetch("/api/create-order", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        cart,
+        name,
+        email,
+        notes
+      })
+    });
+
+    const data = await response.json();
+
+    if(!response.ok){
+      throw new Error(data.error || "Could not create PayPal order.");
+    }
+
+    const approvalLink = data.links?.find(
+      link => link.rel === "approve"
+    );
+
+    if(!approvalLink){
+      throw new Error("PayPal approval link was not returned.");
+    }
+
+    window.location.href = approvalLink.href;
+
+  } catch(error) {
+    console.error(error);
+    alert(error.message || "Something went wrong.");
+  }
 }
 
 function escapeHtml(s){
