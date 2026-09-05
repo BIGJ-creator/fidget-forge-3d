@@ -9,7 +9,7 @@
 *{box-sizing:border-box}html{scroll-behavior:smooth}
 body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:linear-gradient(180deg,#0b0b12,#11111c);color:var(--text)}
 a{color:inherit;text-decoration:none}.container{max-width:1100px;margin:auto;padding:0 20px}
-nav{position:sticky;top:0;z-index:10;background:rgba(11,11,18,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+nav{position:sticky;top:0;z-index:10;background:rgba(11,11,18,.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
 .navin{height:70px;display:flex;align-items:center;justify-content:space-between}
 .logo{font-size:22px;font-weight:900}.logo span{color:var(--accent2)}
 .navlinks{display:flex;gap:24px;color:var(--muted);font-weight:700}
@@ -19,14 +19,16 @@ nav{position:sticky;top:0;z-index:10;background:rgba(11,11,18,.85);backdrop-filt
 h1{font-size:clamp(44px,8vw,78px);line-height:.98;margin:22px 0 18px;letter-spacing:-3px}
 .gradient{background:linear-gradient(90deg,#a78bfa,#22d3ee);-webkit-background-clip:text;background-clip:text;color:transparent}
 .hero p{max-width:650px;margin:0 auto 30px;color:var(--muted);font-size:18px;line-height:1.6}
-.cta{display:inline-block;background:var(--accent);padding:14px 22px;border-radius:13px;font-weight:900;box-shadow:0 10px 30px rgba(139,92,246,.25)}
+.cta{display:inline-block;background:var(--accent);padding:14px 22px;border-radius:13px;font-weight:900}
 section{padding:55px 0}h2{text-align:center;font-size:34px;margin:0 0 12px}.sectionsub{text-align:center;color:var(--muted);margin:0 auto 35px}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:20px}
 .card{background:var(--card);border:1px solid var(--border);border-radius:20px;overflow:hidden}
 .product-img{height:210px;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 35%,#30284d,#171722 65%);font-size:70px}
 .cardbody{padding:18px}.card h3{margin:0 0 7px;font-size:20px}.desc{color:var(--muted);font-size:14px;min-height:42px}.price{font-size:22px;font-weight:900;margin:15px 0}
 .colors{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 2px}
-.swatch{width:28px;height:28px;border-radius:50%;border:2px solid #3b3b4c;cursor:pointer}
+.select-wrap{position:relative;margin-top:10px}
+.color-select{width:100%;padding:14px 44px 14px 14px;border-radius:12px;border:1px solid var(--border);background:#0d0d15;color:white;font:inherit;font-weight:700;cursor:pointer;appearance:auto}
+.swatch{width:30px;height:30px;border-radius:50%;border:2px solid #3b3b4c;cursor:pointer}
 .swatch.selected{border-color:white;box-shadow:0 0 0 2px #8b5cf6}
 .colorname{font-size:13px;color:#a9a9bb;margin:5px 0 8px}
 .buy{width:100%;padding:12px;border:0;border-radius:11px;background:white;color:#101018;font-weight:900;cursor:pointer}
@@ -34,11 +36,17 @@ section{padding:55px 0}h2{text-align:center;font-size:34px;margin:0 0 12px}.sect
 .info div{background:#12121d;border:1px solid var(--border);border-radius:16px;padding:22px}.info b{display:block;margin-bottom:8px}.info p{color:var(--muted);margin:0;line-height:1.5}
 footer{border-top:1px solid var(--border);padding:35px 0;color:var(--muted);text-align:center;margin-top:30px}
 .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:20;align-items:center;justify-content:center;padding:20px}
-.modal.open{display:flex}.modalbox{width:min(520px,100%);background:#151522;border:1px solid var(--border);border-radius:20px;padding:24px}
+.modal.open{display:flex}.modalbox{width:min(560px,100%);max-height:90vh;overflow:auto;background:#151522;border:1px solid var(--border);border-radius:20px;padding:24px}
 .modalhead{display:flex;justify-content:space-between;align-items:center}.close{background:none;border:0;color:white;font-size:25px;cursor:pointer}
 input,textarea{width:100%;margin:7px 0 12px;padding:12px;border-radius:10px;border:1px solid var(--border);background:#0d0d15;color:white;font:inherit}
 textarea{min-height:90px}.order{width:100%;border:0;background:var(--accent);color:white;padding:13px;border-radius:11px;font-weight:900;cursor:pointer}
+.cartitem{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid var(--border);padding:12px 0}
+.remove{background:none;border:0;color:#ff7b7b;cursor:pointer}.total{font-size:22px;font-weight:900;text-align:right;margin:18px 0}
 .small{font-size:12px;color:var(--muted);line-height:1.5}
+.custom-options{border:1px solid var(--border);border-radius:14px;padding:14px;margin:12px 0}
+.custom-options h4{margin:0 0 5px}.size-row{display:flex;gap:8px;flex-wrap:wrap}
+.size{padding:9px 13px;border:1px solid var(--border);background:#0d0d15;color:white;border-radius:10px;cursor:pointer}
+.size.selected{border-color:white;box-shadow:0 0 0 2px #8b5cf6}
 @media(max-width:650px){.navlinks{display:none}.hero{padding-top:65px}h1{letter-spacing:-2px}}
 </style>
 </head>
@@ -62,173 +70,219 @@ textarea{min-height:90px}.order{width:100%;border:0;background:var(--accent);col
 
 <section id="shop">
 <div class="container">
-  <h2>Shop the collection</h2>
-  <p class="sectionsub">More designs can be added as the business grows.</p>
-  <div class="grid">
-    <article class="card">
-      
-      <div class="cardbody"><h3>Keyboard Clicker</h3><p class="desc">A compact, satisfying button fidget.</p><div class="price">$5.00</div><div class="colorname">Color: <span id="color1">White</span></div>
-<div class="colors">
-<button class="swatch selected" style="background:#f5f5f5" title="White" onclick="pick(1,'White',this)"></button>
-<button class="swatch" style="background:#ff6a00" title="Orange" onclick="pick(1,'Orange',this)"></button>
-<button class="swatch" style="background:#ffd21c" title="Yellow" onclick="pick(1,'Yellow',this)"></button>
-<button class="swatch" style="background:#e62929" title="Red" onclick="pick(1,'Red',this)"></button>
-<button class="swatch" style="background:#ff5f73" title="Pink" onclick="pick(1,'Pink',this)"></button>
-<button class="swatch" style="background:#18a86b" title="Green" onclick="pick(1,'Green',this)"></button>
-<button class="swatch" style="background:#1677d2" title="Blue" onclick="pick(1,'Blue',this)"></button>
-<button class="swatch" style="background:#80838a" title="Gray" onclick="pick(1,'Gray',this)"></button>
-</div>
-<button class="buy" onclick="addProduct('Keyboard Clicker',5,1)">Add to cart</button></div>
-    </article>
-    <article class="card">
-      <div class="product-img">🌀</div>
-      <div class="cardbody"><h3>Infinity Fidget</h3><p class="desc">Smooth movement in a pocket-sized design.</p><div class="price">$6.00</div><div class="colorname">Color: <span id="color2">White</span></div>
-<div class="colors">
-<button class="swatch selected" style="background:#f5f5f5" title="White" onclick="pick(2,'White',this)"></button>
-<button class="swatch" style="background:#ff6a00" title="Orange" onclick="pick(2,'Orange',this)"></button>
-<button class="swatch" style="background:#ffd21c" title="Yellow" onclick="pick(2,'Yellow',this)"></button>
-<button class="swatch" style="background:#e62929" title="Red" onclick="pick(2,'Red',this)"></button>
-<button class="swatch" style="background:#ff5f73" title="Pink" onclick="pick(2,'Pink',this)"></button>
-<button class="swatch" style="background:#18a86b" title="Green" onclick="pick(2,'Green',this)"></button>
-<button class="swatch" style="background:#1677d2" title="Blue" onclick="pick(2,'Blue',this)"></button>
-<button class="swatch" style="background:#80838a" title="Gray" onclick="pick(2,'Gray',this)"></button>
-</div>
-<button class="buy" onclick="addProduct('Infinity Fidget',6,2)">Add to cart</button></div>
-    </article>
-    <article class="card">
-      <div class="product-img">🐍</div>
-      <div class="cardbody"><h3>Flexi Fidget</h3><p class="desc">A fun articulated print that moves in your hand.</p><div class="price">$7.00</div><div class="colorname">Color: <span id="color3">White</span></div>
-<div class="colors">
-<button class="swatch selected" style="background:#f5f5f5" title="White" onclick="pick(3,'White',this)"></button>
-<button class="swatch" style="background:#ff6a00" title="Orange" onclick="pick(3,'Orange',this)"></button>
-<button class="swatch" style="background:#ffd21c" title="Yellow" onclick="pick(3,'Yellow',this)"></button>
-<button class="swatch" style="background:#e62929" title="Red" onclick="pick(3,'Red',this)"></button>
-<button class="swatch" style="background:#ff5f73" title="Pink" onclick="pick(3,'Pink',this)"></button>
-<button class="swatch" style="background:#18a86b" title="Green" onclick="pick(3,'Green',this)"></button>
-<button class="swatch" style="background:#1677d2" title="Blue" onclick="pick(3,'Blue',this)"></button>
-<button class="swatch" style="background:#80838a" title="Gray" onclick="pick(3,'Gray',this)"></button>
-</div>
-<button class="buy" onclick="addProduct('Flexi Fidget',7,3)">Add to cart</button></div>
-    </article>
-    <article class="card">
-      
-      <div style="height:210px;overflow:hidden;background:#171722"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA3MDAgNDMwIj4KPGRlZnM+CjxsaW5lYXJHcmFkaWVudCBpZD0iZyIgeDE9IjAiIHkxPSIwIiB4Mj0iMSIgeTI9IjEiPjxzdG9wIHN0b3AtY29sb3I9IiMzMDI4NGQiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiMxNTE1MjIiLz48L2xpbmVhckdyYWRpZW50Pgo8ZmlsdGVyIGlkPSJzIj48ZmVEcm9wU2hhZG93IGR4PSIwIiBkeT0iMTIiIHN0ZERldmlhdGlvbj0iMTAiIGZsb29kLW9wYWNpdHk9Ii40Ii8+PC9maWx0ZXI+CjwvZGVmcz4KPHJlY3Qgd2lkdGg9IjcwMCIgaGVpZ2h0PSI0MzAiIHJ4PSIzMCIgZmlsbD0idXJsKCNnKSIvPgo8ZyB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxMDUgNzApIHJvdGF0ZSgtNCAyNDUgMTQwKSIgZmlsdGVyPSJ1cmwoI3MpIj4KPHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjQ5MCIgaGVpZ2h0PSIyODAiIHJ4PSIzOCIgZmlsbD0iIzhiNWNmNiIgc3Ryb2tlPSIjYjlhMGZmIiBzdHJva2Utd2lkdGg9IjUiLz4KPHJlY3QgeD0iMjUiIHk9IjI1IiB3aWR0aD0iNDQwIiBoZWlnaHQ9IjIzMCIgcng9IjI4IiBmaWxsPSIjMjQyNDMzIi8+CjxyZWN0IHg9Ijc1IiB5PSI2NSIgd2lkdGg9IjEyNSIgaGVpZ2h0PSIxMjUiIHJ4PSIyNCIgZmlsbD0iIzIyZDNlZSIgc3Ryb2tlPSIjMGMxMDE4IiBzdHJva2Utd2lkdGg9IjkiLz4KPHJlY3QgeD0iMjkwIiB5PSI2NSIgd2lkdGg9IjEyNSIgaGVpZ2h0PSIxMjUiIHJ4PSIyNCIgZmlsbD0iI2ZmN2EwMCIgc3Ryb2tlPSIjMGMxMDE4IiBzdHJva2Utd2lkdGg9IjkiLz4KPGNpcmNsZSBjeD0iMTM3IiBjeT0iMjI1IiByPSIxMCIgZmlsbD0iIzIyZDNlZSIvPjxjaXJjbGUgY3g9IjM1MyIgY3k9IjIyNSIgcj0iMTAiIGZpbGw9IiNmZjdhMDAiLz4KPHJlY3QgeD0iNDQ1IiB5PSIyMCIgd2lkdGg9IjMwIiBoZWlnaHQ9IjMwIiByeD0iOCIgZmlsbD0iI2RkZCIvPgo8L2c+Cjx0ZXh0IHg9IjM1MCIgeT0iMzk1IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZm9udC1mYW1pbHk9IkFyaWFsLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjQiIGZvbnQtd2VpZ2h0PSI3MDAiPkN1c3RvbSBLZXljaGFpbiDigKIgUGljayAzIENvbG9yczwvdGV4dD4KPC9zdmc+" alt="Custom Keychain keyboard fidget in different colors" style="width:100%;height:100%;object-fit:cover"></div>
+<h2>Shop the collection</h2>
+<p class="sectionsub">More designs can be added as the business grows.</p>
+<div class="grid">
 
-<div class="colorname">Base color: <span id="baseColor">White</span></div>
-<div class="colors">
-<button class="swatch selected" style="background:#f5f5f5" onclick="pickCustom('base','White',this)"></button>
-<button class="swatch" style="background:#111" onclick="pickCustom('base','Black',this)"></button>
-<button class="swatch" style="background:#1677d2" onclick="pickCustom('base','Blue',this)"></button>
-<button class="swatch" style="background:#18a86b" onclick="pickCustom('base','Green',this)"></button>
-<button class="swatch" style="background:#ff7a00" onclick="pickCustom('base','Orange',this)"></button>
-<button class="swatch" style="background:#e62929" onclick="pickCustom('base','Red',this)"></button>
-<button class="swatch" style="background:#ff6fa0" onclick="pickCustom('base','Pink',this)"></button>
-<button class="swatch" style="background:#80838a" onclick="pickCustom('base','Gray',this)"></button>
+<article class="card">
+<div class="product-img">⌨️</div>
+<div class="cardbody">
+<h3>Keyboard Clicker</h3><p class="desc">A compact, satisfying button fidget.</p><div class="price">$5.00</div>
+<div class="colorname">Color: <span id="color1">White</span></div>
+<div class="colors" data-group="1"></div>
+<button class="buy" onclick="addProduct('Keyboard Clicker',5,'color1')">Add to cart</button>
+</div></article>
+
+<article class="card">
+<div class="product-img">🌀</div>
+<div class="cardbody">
+<h3>Infinity Fidget</h3><p class="desc">Smooth movement in a pocket-sized design.</p><div class="price">$6.00</div>
+<div class="colorname">Color: <span id="color2">White</span></div>
+<div class="colors" data-group="2"></div>
+<button class="buy" onclick="addProduct('Infinity Fidget',6,'color2')">Add to cart</button>
+</div></article>
+
+<article class="card">
+<div class="product-img">🐍</div>
+<div class="cardbody">
+<h3>Flexi Fidget</h3><p class="desc">A fun articulated print that moves in your hand.</p><div class="price">$7.00</div>
+<div class="colorname">Color: <span id="color3">White</span></div>
+<div class="colors" data-group="3"></div>
+<button class="buy" onclick="addProduct('Flexi Fidget',7,'color3')">Add to cart</button>
+</div></article>
+
+<article class="card">
+<div class="product-img">🎮</div>
+<div class="cardbody">
+<h3>Custom Keychain</h3><p class="desc">Choose the base, top switch, bottom switch, filament colors, and size.</p>
+<div class="price">$6.00</div>
+
+<div class="custom-options">
+<h4>Base color</h4>
+<div class="select-wrap">
+<select class="color-select" id="baseSelect" onchange="pickCustomSelect('base',this.value)">
+<option>White</option><option>Orange</option><option>Yellow</option><option>Red</option><option>Pink</option><option>Green</option><option>Blue</option><option>Gray</option>
+</select>
+</div>
 </div>
 
-<div class="colorname">Switch 1 (top): <span id="switch1Color">White</span></div>
-<div class="colors">
-<button class="swatch selected" style="background:#f5f5f5" onclick="pickCustom('switch1','White',this)"></button>
-<button class="swatch" style="background:#111" onclick="pickCustom('switch1','Black',this)"></button>
-<button class="swatch" style="background:#1677d2" onclick="pickCustom('switch1','Blue',this)"></button>
-<button class="swatch" style="background:#18a86b" onclick="pickCustom('switch1','Green',this)"></button>
-<button class="swatch" style="background:#ff7a00" onclick="pickCustom('switch1','Orange',this)"></button>
-<button class="swatch" style="background:#e62929" onclick="pickCustom('switch1','Red',this)"></button>
-<button class="swatch" style="background:#ff6fa0" onclick="pickCustom('switch1','Pink',this)"></button>
-<button class="swatch" style="background:#80838a" onclick="pickCustom('switch1','Gray',this)"></button>
+<div class="custom-options">
+<h4>Switch 1 (top)</h4>
+<div class="select-wrap">
+<select class="color-select" id="switch1Select" onchange="pickCustomSelect('switch1',this.value)">
+<option>White</option><option>Orange</option><option>Yellow</option><option>Red</option><option>Pink</option><option>Green</option><option>Blue</option><option>Gray</option>
+</select>
+</div>
 </div>
 
-<div class="colorname">Switch 2 (bottom): <span id="switch2Color">White</span></div>
-<div class="colors">
-<button class="swatch selected" style="background:#f5f5f5" onclick="pickCustom('switch2','White',this)"></button>
-<button class="swatch" style="background:#111" onclick="pickCustom('switch2','Black',this)"></button>
-<button class="swatch" style="background:#1677d2" onclick="pickCustom('switch2','Blue',this)"></button>
-<button class="swatch" style="background:#18a86b" onclick="pickCustom('switch2','Green',this)"></button>
-<button class="swatch" style="background:#ff7a00" onclick="pickCustom('switch2','Orange',this)"></button>
-<button class="swatch" style="background:#e62929" onclick="pickCustom('switch2','Red',this)"></button>
-<button class="swatch" style="background:#ff6fa0" onclick="pickCustom('switch2','Pink',this)"></button>
-<button class="swatch" style="background:#80838a" onclick="pickCustom('switch2','Gray',this)"></button>
-</div>    
+<div class="custom-options">
+<h4>Switch 2 (bottom)</h4>
+<div class="select-wrap">
+<select class="color-select" id="switch2Select" onchange="pickCustomSelect('switch2',this.value)">
+<option>White</option><option>Orange</option><option>Yellow</option><option>Red</option><option>Pink</option><option>Green</option><option>Blue</option><option>Gray</option>
+</select>
+</div>
+</div>
+
+<div class="custom-options">
+<h4>Size: <span id="customSize">Small</span> — $<span id="customPrice">6.00</span></h4>
+<div class="size-row">
+<button class="size selected" onclick="pickSize('Small',6,this)">Small — $6</button>
+<button class="size" onclick="pickSize('Medium',7,this)">Medium — $7</button>
+<button class="size" onclick="pickSize('Large',8,this)">Large — $8</button>
+</div>
+</div>
+
+<button class="buy" onclick="addCustom()">Add to cart</button>
+</div></article>
+
+</div>
+</div>
+</section>
+
 <section id="why">
 <div class="container">
 <h2>Why Fidget Forge?</h2>
 <p class="sectionsub">Small prints. Big fun.</p>
 <div class="info">
-<div><b>🎨 Lots of colors</b><p>Offer different filament colors so customers can choose their favorite.</p></div>
-<div><b>🖨️ 3D printed</b><p>Each item is produced as a physical 3D print rather than mass-produced.</p></div>
-<div><b>📦 Simple ordering</b><p>Customers can add items to a cart and send an order request.</p></div>
+<div><b>🎨 Lots of colors</b><p>Choose from the filament colors available in the shop.</p></div>
+<div><b>🖨️ 3D printed</b><p>Every item is printed to order.</p></div>
+<div><b>⚙️ Custom options</b><p>Build your custom keychain with three color choices and different sizes.</p></div>
 </div>
 </div>
 </section>
 
 <section id="order">
 <div class="container">
-<h2>Want something custom?</h2>
-<p class="sectionsub">Send an order request and you can work out the details with the customer.</p>
-<div style="text-align:center"><button class="cta" onclick="openCart()">Start an order</button></div>
+<h2>Place an order</h2>
+<p class="sectionsub">Add your items to the cart, then enter your information.</p>
 </div>
 </section>
 
-<footer><div class="container">© 2026 Fidget Forge 3D • 3D printed fidgets</div></footer>
+<footer>
+<div class="container">© 2026 Fidget Forge 3D • Made with care</div>
+</footer>
 
-<div class="modal" id="modal">
+<div class="modal" id="cartModal" onclick="if(event.target===this)closeCart()">
 <div class="modalbox">
-<div class="modalhead"><h2 style="margin:0;text-align:left">Your order</h2><button class="close" onclick="closeCart()">×</button></div>
-<div id="cartItems" style="margin:18px 0"></div>
-<div style="font-size:20px;font-weight:900;margin-bottom:15px">Total: $<span id="total">0.00</span></div>
-<input id="name" placeholder="Your name">
-<input id="contact" placeholder="Parent/guardian contact or email">
-<textarea id="notes" placeholder="Colors, quantities, or custom requests"></textarea>
-<button class="order" onclick="submitOrder()">Send order request</button>
-<p class="small">This demo does not process payments. Add your real contact/payment setup before launching publicly. If you're under 18, have a parent/guardian handle business/payment accounts.</p>
+<div class="modalhead"><h2>Your cart</h2><button class="close" onclick="closeCart()">×</button></div>
+<div id="cartItems"></div>
+<div class="total">Total: $<span id="total">0.00</span></div>
+<div id="checkoutForm">
+<label>Name</label><input id="customerName" placeholder="Your name">
+<label>Email</label><input id="customerEmail" type="email" placeholder="Your email">
+<label>Order notes</label><textarea id="customerNotes" placeholder="Anything you'd like us to know?"></textarea>
+<button class="order" onclick="placeOrder()">Submit order request</button>
+<p class="small">This demo stores the cart in your browser. Connect this form to your preferred order/payment service before taking real payments.</p>
+</div>
 </div>
 </div>
 
 <script>
+const colors=[
+  ["White","#f5f5f5"],["Orange","#ff6a00"],["Yellow","#ffd21c"],["Red","#e62929"],
+  ["Pink","#ff4fa0"],["Green","#18c94a"],["Blue","#1677d2"],["Gray","#80838a"]
+];
+
 let cart=[];
-let selectedColors={1:'White',2:'White',3:'White'};
-let customColors={base:'White',switch1:'White',switch2:'White'};
-function pick(id,color,el){
-  selectedColors[id]=color;
-  document.getElementById('color'+id).textContent=color;
-  el.parentElement.querySelectorAll('.swatch').forEach(s=>s.classList.remove('selected'));
-  el.classList.add('selected');
+let custom={base:"White",switch1:"White",switch2:"White",size:"Small",price:6};
+
+function makeSwatches(container,onPick){
+  colors.forEach(([name,hex],i)=>{
+    const b=document.createElement("button");
+    b.className="swatch"+(i===0?" selected":"");
+    b.style.background=hex;
+    b.title=name;
+    b.setAttribute("aria-label",name);
+    b.onclick=()=>onPick(name,b);
+    container.appendChild(b);
+  });
 }
-function addProduct(name,price,id){
-  cart.push({name,price,color:selectedColors[id]});
-  document.getElementById('count').textContent=cart.length;
+
+document.querySelectorAll(".colors[data-group]").forEach(el=>{
+  const id=el.dataset.group;
+  makeSwatches(el,(name,btn)=>{
+    document.getElementById("color"+id).textContent=name;
+    el.querySelectorAll(".swatch").forEach(x=>x.classList.remove("selected"));
+    btn.classList.add("selected");
+  });
+});
+
+function pickCustomSelect(key,name){
+  custom[key]=name;
 }
-function pickCustom(part,color,el){
-  customColors[part]=color;
-  const label=part==='base'?'baseColor':(part==='switch1'?'switch1Color':'switch2Color');
-  document.getElementById(label).textContent=color;
-  el.parentElement.querySelectorAll('.swatch').forEach(s=>s.classList.remove('selected'));
-  el.classList.add('selected');
+
+
+function pickSize(size,price,btn){
+  custom.size=size;custom.price=price;
+  document.getElementById("customSize").textContent=size;
+  document.getElementById("customPrice").textContent=price.toFixed(2);
+  document.querySelectorAll(".size").forEach(x=>x.classList.remove("selected"));
+  btn.classList.add("selected");
 }
+
+function addProduct(name,price,colorId){
+  cart.push({name,price,color:document.getElementById(colorId).textContent});
+  updateCart();
+  alert(name+" added to cart!");
+}
+
 function addCustom(){
   cart.push({
-    name:'Custom Keychain',
-    price:4,
-    color:'Base: '+customColors.base+', Switch 1: '+customColors.switch1+', Switch 2: '+customColors.switch2
+    name:"Custom Keychain",
+    price:custom.price,
+    color:`Base: ${custom.base}, Top: ${custom.switch1}, Bottom: ${custom.switch2}, Size: ${custom.size}`
   });
-  document.getElementById('count').textContent=cart.length;
+  updateCart();
+  alert("Custom Keychain added to cart!");
 }
-function openCart(){
- document.getElementById('modal').classList.add('open');
- let box=document.getElementById('cartItems');
- if(!cart.length){box.innerHTML='<p style="color:#a9a9bb">Your cart is empty.</p>'}
- else{box.innerHTML=cart.map((x,i)=>`<div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #29293a"><span>${x.name}<small style="display:block;color:#a9a9bb">Color: ${x.color}</small></span><span>$${x.price.toFixed(2)} <button onclick="removeItem(${i})" style="margin-left:8px;background:none;border:0;color:#f87171;cursor:pointer">Remove</button></span></div>`).join('')}
- document.getElementById('total').textContent=cart.reduce((s,x)=>s+x.price,0).toFixed(2)
+
+function updateCart(){
+  document.getElementById("count").textContent=cart.length;
+  const box=document.getElementById("cartItems");
+  if(!cart.length){
+    box.innerHTML='<p class="small">Your cart is empty.</p>';
+  }else{
+    box.innerHTML=cart.map((item,i)=>`
+      <div class="cartitem">
+        <div><b>${escapeHtml(item.name)}</b><div class="small">${escapeHtml(item.color||"")}</div></div>
+        <div>$${item.price.toFixed(2)} <button class="remove" onclick="removeItem(${i})">Remove</button></div>
+      </div>`).join("");
+  }
+  document.getElementById("total").textContent=cart.reduce((sum,x)=>sum+x.price,0).toFixed(2);
 }
-function removeItem(i){cart.splice(i,1);document.getElementById('count').textContent=cart.length;openCart()}
-function closeCart(){document.getElementById('modal').classList.remove('open')}
-function submitOrder(){
- if(!cart.length){alert('Add something to your cart first!');return}
- const name=document.getElementById('name').value.trim();
- if(!name){alert('Please enter your name.');return}
- const summary=cart.map(x=>x.name+' ('+x.color+')').join(', ');
- alert('Order request ready!\\n\\nCustomer: '+name+'\\nItems: '+summary+'\\nTotal: $'+cart.reduce((s,x)=>s+x.price,0).toFixed(2)+'\\n\\nConnect this button to your real order/contact system before launching.');
+
+function removeItem(i){cart.splice(i,1);updateCart()}
+
+function openCart(){updateCart();document.getElementById("cartModal").classList.add("open")}
+function closeCart(){document.getElementById("cartModal").classList.remove("open")}
+
+function placeOrder(){
+  if(!cart.length){alert("Your cart is empty.");return}
+  const name=document.getElementById("customerName").value.trim();
+  const email=document.getElementById("customerEmail").value.trim();
+  if(!name||!email){alert("Please enter your name and email.");return}
+  const order=cart.map(x=>`${x.name} - $${x.price.toFixed(2)} - ${x.color}`).join("\\n");
+  const notes=document.getElementById("customerNotes").value.trim();
+  const message=`Order request for ${name}\\nEmail: ${email}\\n\\n${order}\\n\\nTotal: $${cart.reduce((s,x)=>s+x.price,0).toFixed(2)}\\nNotes: ${notes}`;
+  alert("Order request ready!\\n\\n"+message);
 }
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+}
+
+updateCart();
 </script>
 </body>
 </html>
