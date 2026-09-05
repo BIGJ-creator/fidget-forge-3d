@@ -51,6 +51,9 @@ textarea{min-height:90px}.order{width:100%;border:0;background:var(--accent);col
 </style>
 </head>
 <body>
+  <script 
+  src="https://www.paypal.com/sdk/js?client-id=BAAlI3HE8473G_P4u26GXmZJbdbWsuU0oa9zxXhYuUeKo_m8RERXFzyqhJloXovvOYFUX0jGEyU-S0jt4w&components=hosted-buttons&enable-funding=venmo&currency=USD">
+</script>
 <nav>
   <div class="container navin">
     <a class="logo" href="#">Fidget<span>Forge</span> 3D</a>
@@ -80,6 +83,12 @@ textarea{min-height:90px}.order{width:100%;border:0;background:var(--accent);col
 <h3>Keyboard Clicker</h3><p class="desc">A compact, satisfying button fidget.</p><div class="price">$5.00</div>
 <div class="colorname">Color: <span id="color1">White</span></div>
 <div class="colors" data-group="1"></div>
+  <div id="paypal-container-PBMARYHCAA7QJ"></div>
+<script>
+  paypal.HostedButtons({
+    hostedButtonId: "PBMARYHCAA7QJ",
+  }).render("#paypal-container-PBMARYHCAA7QJ")
+</script>
 <button class="buy" onclick="addProduct('Keyboard Clicker',5,'color1')">Add to cart</button>
 </div></article>
 
