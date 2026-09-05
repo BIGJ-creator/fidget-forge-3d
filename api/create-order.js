@@ -19,9 +19,11 @@ function calculateTotal(cart) {
   return cart.reduce((total, item) => {
     if (item.name === "Custom Keychain") {
       const size = item.size || "Small";
+
       if (PRICES["Custom Keychain"][size] === undefined) {
-        throw new Error("Invalid size.");
+        throw new Error("Invalid custom keychain size.");
       }
+
       return total + PRICES["Custom Keychain"][size];
     }
 
@@ -50,7 +52,9 @@ async function getAccessToken() {
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.error_description || "PayPal authentication failed.");
+    throw new Error(
+      data.error_description || "PayPal authentication failed."
+    );
   }
 
   return data.access_token;
@@ -88,12 +92,18 @@ module.exports = async (req, res) => {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.message || "Could not create PayPal order.");
+      throw new Error(
+        data.message || "Could not create PayPal order."
+      );
     }
 
-    return res.status(200).json({ id: data.id });
+    return res.status(200).json({
+      id: data.id,
+      links: data.links
+    });
   } catch (error) {
     console.error(error);
+
     return res.status(500).json({
       error: error.message || "Server error."
     });
