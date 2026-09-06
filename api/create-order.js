@@ -133,7 +133,7 @@ module.exports = async (req, res) => {
     experience_context: {
       brand_name: "Fidget Forge 3D",
       user_action: "PAY_NOW",
-      shipping_preference: "SET_FROM_PROVIDER",
+shipping_preference: "SET_PROVIDED_ADDRESS",
 
       return_url:
         `${baseUrl}/api/capture-order`,
