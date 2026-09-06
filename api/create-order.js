@@ -207,7 +207,22 @@ module.exports = async (req, res) => {
         "Could not create PayPal order."
       );
     }
+const approvalLink = data.links?.find(
+  link =>
+    link.rel === "approve" ||
+    link.rel === "payer-action"
+);
 
+if (!approvalLink) {
+  console.error(
+    "FULL PAYPAL RESPONSE:",
+    JSON.stringify(data, null, 2)
+  );
+
+  throw new Error(
+    "PayPal checkout link was not returned."
+  );
+}
     /*
       Save the order so capture-order.js
       can retrieve it after PayPal approval.
