@@ -502,7 +502,19 @@ async function placeOrder(){
       }
     );
 
-    const data = await response.json();
+const responseText = await response.text();
+
+let data;
+
+try {
+  data = JSON.parse(responseText);
+} catch {
+  console.error("NON-JSON RESPONSE FROM SERVER:", responseText);
+
+  throw new Error(
+    "The server returned an invalid response. Check the Vercel logs for /api/create-order."
+  );
+}
 
     console.log(
       "PAYPAL CREATE ORDER RESPONSE:",
