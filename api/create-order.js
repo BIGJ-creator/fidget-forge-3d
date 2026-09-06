@@ -35,6 +35,43 @@ function calculateTotal(cart) {
   }, 0);
 }
 
+function cleanText(value, fallback = "") {
+  return String(value ?? fallback).replace(/[<>]/g, "").trim();
+}
+
+function getItemDetails(item) {
+  const name = cleanText(item.name);
+
+  if (name === "Custom Keychain") {
+    const size = cleanText(item.size, "Small");
+    const base = cleanText(item.base, "White");
+    const top = cleanText(item.switch1, "White");
+    const bottom = cleanText(item.switch2, "White");
+
+    return `${name} | Base: ${base} | Top: ${top} | Bottom: ${bottom} | Size: ${size}`;
+  }
+
+  const color = cleanText(item.color, "White");
+  return `${name} | Color: ${color}`;
+}
+
+function makeOrderDescription(cart, customerName, customerEmail, notes) {
+  const items = cart.map((item, index) => {
+    return `${index + 1}. ${getItemDetails(item)}`;
+  });
+
+  let description =
+    `Fidget Forge 3D order for ${cleanText(customerName)} ` +
+    `(${cleanText(customerEmail)})\n` +
+    items.join("\n");
+
+  if (notes) {
+    description += `\nNotes: ${cleanText(notes)}`;
+  }
+
+  return description.slice(0, 1200);
+}
+
 async function getAccessToken() {
   const credentials = Buffer.from(
     `${process.env.PAYPAL_CLIENT_ID}:${process.env.PAYPAL_CLIENT_SECRET}`
@@ -66,7 +103,32 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const total = calculateTotal(req.body.cart);
+    const cart = req.body?.cart;
+    const customerName = cleanText(req.body?.name);
+    const customerEmail = cleanText(req.body?.email);
+    const notes = cleanText(req.body?.notes);
+
+    if (!customerName || !customerEmail) {
+      return res.status(400).json({
+        error: "Name and email are required."
+      });
+    }
+
+    if (!Array.isArray(cart) || cart.length === 0) {
+      return res.status(400).json({
+        error: "Cart is empty."
+      });
+    }
+
+    const total = calculateTotal(cart);
+
+    const orderDescription = makeOrderDescription(
+      cart,
+      customerName,
+      customerEmail,
+      notes
+    );
+
     const accessToken = await getAccessToken();
 
     const response = await fetch(`${PAYPAL_API}/v2/checkout/orders`, {
@@ -83,7 +145,7 @@ module.exports = async (req, res) => {
               currency_code: "USD",
               value: total.toFixed(2)
             },
-            description: "Fidget Forge 3D order"
+            description: orderDescription
           }
         ]
       })
