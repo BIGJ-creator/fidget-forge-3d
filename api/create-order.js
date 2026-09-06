@@ -12,15 +12,6 @@ const PRICES = {
   }
 };
 
-function escapeHtml(value) {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
 function calculateItemsTotal(cart) {
   if (!Array.isArray(cart) || cart.length === 0) {
     throw new Error("Cart is empty.");
@@ -51,7 +42,10 @@ function calculateItemsTotal(cart) {
 }
 
 async function getAccessToken() {
-  if (!process.env.PAYPAL_CLIENT_ID || !process.env.PAYPAL_CLIENT_SECRET) {
+  if (
+    !process.env.PAYPAL_CLIENT_ID ||
+    !process.env.PAYPAL_CLIENT_SECRET
+  ) {
     throw new Error("PayPal environment variables are missing.");
   }
 
@@ -59,149 +53,28 @@ async function getAccessToken() {
     `${process.env.PAYPAL_CLIENT_ID}:${process.env.PAYPAL_CLIENT_SECRET}`
   ).toString("base64");
 
-  const response = await fetch(`${PAYPAL_API}/v1/oauth2/token`, {
-    method: "POST",
-    headers: {
-      Authorization: `Basic ${credentials}`,
-      "Content-Type": "application/x-www-form-urlencoded"
-    },
-    body: "grant_type=client_credentials"
-  });
+  const response = await fetch(
+    `${PAYPAL_API}/v1/oauth2/token`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${credentials}`,
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      body: "grant_type=client_credentials"
+    }
+  );
 
   const data = await response.json();
 
   if (!response.ok) {
     throw new Error(
-      data.error_description || "PayPal authentication failed."
+      data.error_description ||
+      "PayPal authentication failed."
     );
   }
 
   return data.access_token;
-}
-
-async function sendOrderEmail({
-  name,
-  email,
-  notes,
-  cart,
-  itemsTotal,
-  shipping,
-  total,
-  shippingAddress,
-  paypalOrderId
-}) {
-  if (!process.env.RESEND_API_KEY) {
-    throw new Error("RESEND_API_KEY is missing.");
-  }
-
-  if (!process.env.ORDER_NOTIFICATION_EMAIL) {
-    throw new Error("ORDER_NOTIFICATION_EMAIL is missing.");
-  }
-
-  const itemsHtml = cart.map((item) => {
-    let details;
-
-    if (item.name === "Custom Keychain") {
-      details = `
-        <ul>
-          <li><strong>Size:</strong> ${escapeHtml(item.size || "Small")}</li>
-          <li><strong>Base:</strong> ${escapeHtml(item.base || "White")}</li>
-          <li><strong>Top switch:</strong> ${escapeHtml(item.switch1 || "White")}</li>
-          <li><strong>Bottom switch:</strong> ${escapeHtml(item.switch2 || "White")}</li>
-        </ul>
-      `;
-    } else {
-      details = `
-        <p><strong>Color:</strong> ${escapeHtml(item.color || "Not selected")}</p>
-      `;
-    }
-
-    const price =
-      item.name === "Custom Keychain"
-        ? PRICES["Custom Keychain"][item.size || "Small"]
-        : PRICES[item.name];
-
-    return `
-      <div style="
-        padding:12px;
-        margin-bottom:10px;
-        border:1px solid #ddd;
-        border-radius:8px;
-      ">
-        <strong>${escapeHtml(item.name)}</strong>
-        <p>Price: $${Number(price).toFixed(2)}</p>
-        ${details}
-      </div>
-    `;
-  }).join("");
-
-  const addressHtml = shippingAddress ? `
-    <h2>Shipping Address</h2>
-    <p>${escapeHtml(shippingAddress.address_line_1)}</p>
-    ${shippingAddress.address_line_2
-      ? `<p>${escapeHtml(shippingAddress.address_line_2)}</p>`
-      : ""}
-    <p>
-      ${escapeHtml(shippingAddress.admin_area_2)},
-      ${escapeHtml(shippingAddress.admin_area_1)}
-      ${escapeHtml(shippingAddress.postal_code)}
-    </p>
-    <p>${escapeHtml(shippingAddress.country_code)}</p>
-  ` : "";
-
-  const emailHtml = `
-    <div style="font-family:Arial,sans-serif;max-width:650px;margin:auto">
-      <h1>🛒 New Fidget Forge 3D Order</h1>
-
-      <h2>Customer</h2>
-      <p><strong>Name:</strong> ${escapeHtml(name)}</p>
-      <p><strong>Email:</strong> ${escapeHtml(email)}</p>
-
-      ${addressHtml}
-
-      <h2>Order</h2>
-      ${itemsHtml}
-
-      <p><strong>Items:</strong> $${itemsTotal.toFixed(2)}</p>
-      <p><strong>Shipping:</strong> $${shipping.toFixed(2)}</p>
-
-      <h2>Total: $${total.toFixed(2)}</h2>
-
-      <h2>Notes</h2>
-      <p>${escapeHtml(notes || "No notes")}</p>
-
-      <p>
-        <strong>PayPal Order ID:</strong>
-        ${escapeHtml(paypalOrderId)}
-      </p>
-    </div>
-  `;
-
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      from: `Fidget Forge 3D <orders@${process.env.RESEND_EMAIL_DOMAIN || "jakeglenn.com"}>`,
-      to: [process.env.ORDER_NOTIFICATION_EMAIL],
-      reply_to: email,
-      subject: `🛒 New Fidget Forge Order - $${total.toFixed(2)}`,
-      html: emailHtml
-    })
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    console.error("Resend error:", data);
-    throw new Error(
-      data.message || "Could not send order notification email."
-    );
-  }
-
-  return data;
 }
 
 module.exports = async (req, res) => {
@@ -238,25 +111,36 @@ module.exports = async (req, res) => {
 
     const accessToken = await getAccessToken();
 
+    const baseUrl =
+      process.env.SITE_URL ||
+      `https://${req.headers.host}`;
+
     const response = await fetch(
       `${PAYPAL_API}/v2/checkout/orders`,
       {
         method: "POST",
+
         headers: {
           Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json"
         },
-      body: JSON.stringify({
-  intent: "CAPTURE",
 
-  application_context: {
-    brand_name: "Fidget Forge 3D",
-    user_action: "PAY_NOW",
-    return_url: "https://www.jakeglenn.com/?payment=success",
-    cancel_url: "https://www.jakeglenn.com/?payment=cancelled"
-  },
+        body: JSON.stringify({
+          intent: "CAPTURE",
 
-  purchase_units: [
+          application_context: {
+            brand_name: "Fidget Forge 3D",
+            user_action: "PAY_NOW",
+
+            return_url:
+              `${baseUrl}/api/capture-order`,
+
+            cancel_url:
+              `${baseUrl}/?payment=cancelled`
+          },
+
+          purchase_units: [
+            {
               amount: {
                 currency_code: "USD",
                 value: total.toFixed(2),
@@ -284,7 +168,8 @@ module.exports = async (req, res) => {
                     shippingAddress.address_line_1,
 
                   address_line_2:
-                    shippingAddress.address_line_2 || undefined,
+                    shippingAddress.address_line_2 ||
+                    undefined,
 
                   admin_area_2:
                     shippingAddress.admin_area_2,
@@ -300,7 +185,8 @@ module.exports = async (req, res) => {
                 }
               },
 
-              description: "Fidget Forge 3D order"
+              description:
+                "Fidget Forge 3D order"
             }
           ]
         })
@@ -310,29 +196,45 @@ module.exports = async (req, res) => {
     const data = await response.json();
 
     if (!response.ok) {
-      console.error("PayPal error:", data);
+      console.error(
+        "PayPal error:",
+        data
+      );
 
       throw new Error(
-        data.message || "Could not create PayPal order."
+        data.message ||
+        "Could not create PayPal order."
       );
     }
 
-    try {
-      await sendOrderEmail({
-        name,
-        email,
-        notes,
-        cart,
-        itemsTotal,
-        shipping,
-        total,
-        shippingAddress,
-        paypalOrderId: data.id
-      });
-    } catch (emailError) {
-      console.error(
-        "Order email failed:",
-        emailError
+    /*
+      Save the order so capture-order.js
+      can retrieve it after PayPal approval.
+    */
+
+    if (!global.pendingOrders) {
+      global.pendingOrders = {};
+    }
+
+    global.pendingOrders[data.id] = {
+      cart,
+      name,
+      email,
+      notes,
+      shippingAddress,
+      itemsTotal,
+      shipping,
+      total
+    };
+
+    const approvalLink =
+      data.links?.find(
+        link => link.rel === "approve"
+      );
+
+    if (!approvalLink) {
+      throw new Error(
+        "PayPal approval link was not returned."
       );
     }
 
@@ -342,6 +244,7 @@ module.exports = async (req, res) => {
     });
 
   } catch (error) {
+
     console.error(
       "Create order error:",
       error
