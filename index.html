@@ -179,10 +179,33 @@ textarea{min-height:90px}.order{width:100%;border:0;background:var(--accent);col
 <div id="cartItems"></div>
 <div class="total">Total: $<span id="total">0.00</span></div>
 <div id="checkoutForm">
-<label>Name</label><input id="customerName" placeholder="Your name">
-<label>Email</label><input id="customerEmail" type="email" placeholder="Your email">
-<label>Order notes</label><textarea id="customerNotes" placeholder="Anything you'd like us to know?"></textarea>
+<label>Name</label>
+<input id="customerName" placeholder="Your name">
+
+<label>Email</label>
+<input id="customerEmail" type="email" placeholder="Your email">
+
+<label>Shipping Address</label>
+<input id="shippingAddress" placeholder="Street address">
+
+<label>City</label>
+<input id="shippingCity" placeholder="City">
+
+<label>State</label>
+<input id="shippingState" placeholder="State">
+
+<label>ZIP Code</label>
+<input id="shippingZip" placeholder="ZIP code">
+
+<label>Order notes</label>
+<textarea id="customerNotes" placeholder="Anything you'd like us to know?"></textarea>
+
 <button class="order" onclick="placeOrder()">Pay with PayPal</button>
+
+<p class="small">
+Shipping: $4.99 flat rate. Your shipping address and order details are sent with the order.
+</p>
+</div>
 <p class="small">Your selected colors, sizes, and order details are sent with the order.</p>
 </div>
 </div>
