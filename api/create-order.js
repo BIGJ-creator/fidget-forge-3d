@@ -296,7 +296,7 @@ async function sendOrderEmail({
     },
     body: JSON.stringify({
       from: "Fidget Forge 3D <orders@jakeglenn.com>",
-      to: ["jake@jakeglenn.com"],
+     to: [process.env.ORDER_NOTIFICATION_EMAIL],
       reply_to: email,
       subject: `🛒 New Fidget Forge Order - $${total.toFixed(2)}`,
       html: emailHtml
