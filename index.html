@@ -49,10 +49,8 @@ textarea{min-height:90px}.order{width:100%;border:0;background:var(--accent);col
 .size.selected{border-color:white;box-shadow:0 0 0 2px #8b5cf6}
 @media(max-width:650px){.navlinks{display:none}.hero{padding-top:65px}h1{letter-spacing:-2px}}
 </style>
-  <script src="https://www.paypal.com/sdk/js?client-id=AbKNcWmprLlALViGqvnqUmNgZX7ze2B3Hb4rmn_rCpScKP0PGheI8hXh6LJ0tcd3ySudJGTVCHaxDHSj&currency=USD"></script>
 </head>
 <body>
-
 <nav>
   <div class="container navin">
     <a class="logo" href="#">Fidget<span>Forge</span> 3D</a>
@@ -104,7 +102,7 @@ textarea{min-height:90px}.order{width:100%;border:0;background:var(--accent);col
 </div></article>
 
 <article class="card">
-<div class="product-img">⌨️</div>
+<div class="product-img">🎮</div>
 <div class="cardbody">
 <h3>Custom Keychain</h3><p class="desc">Choose the base, top switch, bottom switch, filament colors, and size.</p>
 <div class="price">$6.00</div>
@@ -184,8 +182,8 @@ textarea{min-height:90px}.order{width:100%;border:0;background:var(--accent);col
 <label>Name</label><input id="customerName" placeholder="Your name">
 <label>Email</label><input id="customerEmail" type="email" placeholder="Your email">
 <label>Order notes</label><textarea id="customerNotes" placeholder="Anything you'd like us to know?"></textarea>
-<button class="order" onclick="placeOrder()">Submit order request</button>
-<p class="small">This demo stores the cart in your browser. Connect this form to your preferred order/payment service before taking real payments.</p>
+<button class="order" onclick="placeOrder()">Pay with PayPal</button>
+<p class="small">Your selected colors, sizes, and order details are sent with the order.</p>
 </div>
 </div>
 </div>
@@ -275,22 +273,20 @@ async function placeOrder(){
     return;
   }
 
-  const name = document.getElementById("customerName").value.trim();
-  const email = document.getElementById("customerEmail").value.trim();
-  const notes = document.getElementById("customerNotes").value.trim();
+  const name=document.getElementById("customerName").value.trim();
+  const email=document.getElementById("customerEmail").value.trim();
+  const notes=document.getElementById("customerNotes").value.trim();
 
-  if(!name || !email){
+  if(!name||!email){
     alert("Please enter your name and email.");
     return;
   }
 
-  try {
-    const response = await fetch("/api/create-order", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
+  try{
+    const response=await fetch("/api/create-order",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
         cart,
         name,
         email,
@@ -298,25 +294,22 @@ async function placeOrder(){
       })
     });
 
-    const data = await response.json();
+    const data=await response.json();
 
     if(!response.ok){
-      throw new Error(data.error || "Could not create PayPal order.");
+      throw new Error(data.error||"Could not create PayPal order.");
     }
 
-    const approvalLink = data.links?.find(
-      link => link.rel === "approve"
-    );
+    const approvalLink=data.links?.find(link=>link.rel==="approve");
 
     if(!approvalLink){
       throw new Error("PayPal approval link was not returned.");
     }
 
-    window.location.href = approvalLink.href;
-
-  } catch(error) {
+    window.location.href=approvalLink.href;
+  }catch(error){
     console.error(error);
-    alert(error.message || "Something went wrong.");
+    alert(error.message||"Something went wrong.");
   }
 }
 
