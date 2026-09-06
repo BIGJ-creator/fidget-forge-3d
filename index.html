@@ -269,6 +269,405 @@ let custom = {
 function makeSwatches(container,onPick){
   colors.forEach(([name,hex],i)=>{
     const button=document.createElement("button");
+
+    button.type="button";
+    button.className="swatch"+(i===0?" selected":"");
+    button.style.background=hex;
+    button.title=name;
+    button.setAttribute("aria-label",name);
+
+    button.onclick=()=>{
+      onPick(name,button);
+    };
+
+    container.appendChild(button);
+  });
+}
+
+document.querySelectorAll(".colors[data-group]").forEach(container=>{
+  const id=container.dataset.group;
+
+  makeSwatches(container,(name,button)=>{
+    document.getElementById("color"+id).textContent=name;
+
+    container.querySelectorAll(".swatch").forEach(item=>{
+      item.classList.remove("selected");
+    });
+
+    button.classList.add("selected");
+  });
+});
+
+function pickCustomSelect(key,name){
+  custom[key]=name;
+}
+
+function pickSize(size,price,button){
+  custom.size=size;
+  custom.price=price;
+
+  document.getElementById("customSize").textContent=size;
+  document.getElementById("customPrice").textContent=price.toFixed(2);
+
+  document.querySelectorAll(".size").forEach(item=>{
+    item.classList.remove("selected");
+  });
+
+  button.classList.add("selected");
+}
+
+function addProduct(name,price,colorId){
+  const selectedColor =
+    document.getElementById(colorId).textContent;
+
+  cart.push({
+    name:name,
+    price:price,
+    color:selectedColor
+  });
+
+  updateCart();
+
+  alert(name+" added to cart!");
+}
+
+function addCustom(){
+  cart.push({
+    name:"Custom Keychain",
+    price:custom.price,
+    base:custom.base,
+    switch1:custom.switch1,
+    switch2:custom.switch2,
+    size:custom.size,
+    color:
+      `Base: ${custom.base}, Top: ${custom.switch1}, Bottom: ${custom.switch2}`
+  });
+
+  updateCart();
+
+  alert("Custom Keychain added to cart!");
+}
+
+function updateCart(){
+  document.getElementById("count").textContent=cart.length;
+
+  const box=document.getElementById("cartItems");
+
+  if(!cart.length){
+    box.innerHTML=
+      '<p class="small">Your cart is empty.</p>';
+  }else{
+    box.innerHTML=cart.map((item,index)=>`
+      <div class="cartitem">
+        <div>
+          <b>${escapeHtml(item.name)}</b>
+          <div class="small">
+            ${escapeHtml(item.color||"")}
+          </div>
+        </div>
+
+        <div>
+          $${Number(item.price).toFixed(2)}
+          <button
+            class="remove"
+            onclick="removeItem(${index})"
+          >
+            Remove
+          </button>
+        </div>
+      </div>
+    `).join("");
+  }
+
+  const itemTotal=cart.reduce(
+    (sum,item)=>sum+Number(item.price),
+    0
+  );
+
+  const shipping=cart.length ? 4.99 : 0;
+
+  const grandTotal=itemTotal+shipping;
+
+  document.getElementById("total").textContent =
+    grandTotal.toFixed(2);
+}
+
+function removeItem(index){
+  cart.splice(index,1);
+  updateCart();
+}
+
+function openCart(){
+  updateCart();
+
+  document
+    .getElementById("cartModal")
+    .classList.add("open");
+}
+
+function closeCart(){
+  document
+    .getElementById("cartModal")
+    .classList.remove("open");
+}
+
+
+/* =========================
+   PAYPAL CHECKOUT
+   ========================= */
+
+async function placeOrder(){
+
+  if(!cart.length){
+    alert("Your cart is empty.");
+    return;
+  }
+
+  const name =
+    document.getElementById("customerName")
+      .value.trim();
+
+  const email =
+    document.getElementById("customerEmail")
+      .value.trim();
+
+  const address =
+    document.getElementById("shippingAddress")
+      .value.trim();
+
+  const city =
+    document.getElementById("shippingCity")
+      .value.trim();
+
+  const state =
+    document.getElementById("shippingState")
+      .value.trim();
+
+  const zip =
+    document.getElementById("shippingZip")
+      .value.trim();
+
+  const notes =
+    document.getElementById("customerNotes")
+      .value.trim();
+
+  if(!name || !email){
+    alert("Please enter your name and email.");
+    return;
+  }
+
+  if(!address || !city || !state || !zip){
+    alert("Please enter your complete shipping address.");
+    return;
+  }
+
+  const button =
+    document.querySelector(".order");
+
+  if(button){
+    button.disabled=true;
+    button.textContent="Connecting to PayPal...";
+  }
+
+  try{
+
+    const response = await fetch(
+      "/api/create-order",
+      {
+        method:"POST",
+
+        headers:{
+          "Content-Type":"application/json"
+        },
+
+        body:JSON.stringify({
+
+          cart:cart,
+
+          name:name,
+
+          email:email,
+
+          notes:notes,
+
+          shippingAddress:{
+            address_line_1:address,
+            admin_area_2:city,
+            admin_area_1:state,
+            postal_code:zip,
+            country_code:"US"
+          }
+
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    console.log(
+      "PAYPAL CREATE ORDER RESPONSE:",
+      data
+    );
+
+    if(!response.ok){
+      throw new Error(
+        data.error ||
+        "Could not create PayPal order."
+      );
+    }
+
+
+    /*
+      PayPal can return the checkout URL
+      as:
+
+      data.approvalUrl
+
+      OR as a link with:
+
+      rel: "payer-action"
+
+      OR, on some responses:
+
+      rel: "approve"
+    */
+
+    let approvalUrl = null;
+
+
+    // First: our API's approvalUrl
+    if(
+      data.approvalUrl &&
+      typeof data.approvalUrl === "string"
+    ){
+      approvalUrl=data.approvalUrl;
+    }
+
+
+    // Second: payer-action
+    if(!approvalUrl && Array.isArray(data.links)){
+
+      const payerAction =
+        data.links.find(
+          link =>
+            link &&
+            link.rel === "payer-action" &&
+            link.href
+        );
+
+      if(payerAction){
+        approvalUrl=payerAction.href;
+      }
+    }
+
+
+    // Third: approve
+    if(!approvalUrl && Array.isArray(data.links)){
+
+      const approve =
+        data.links.find(
+          link =>
+            link &&
+            link.rel === "approve" &&
+            link.href
+        );
+
+      if(approve){
+        approvalUrl=approve.href;
+      }
+    }
+
+
+    console.log(
+      "PAYPAL APPROVAL URL:",
+      approvalUrl
+    );
+
+
+    if(!approvalUrl){
+
+      console.error(
+        "FULL PAYPAL RESPONSE:",
+        data
+      );
+
+      throw new Error(
+        "PayPal checkout link was not returned."
+      );
+    }
+
+
+    // Redirect customer to PayPal
+    window.location.assign(
+      approvalUrl
+    );
+
+  }catch(error){
+
+    console.error(
+      "CHECKOUT ERROR:",
+      error
+    );
+
+    alert(
+      error.message ||
+      "Something went wrong."
+    );
+
+    if(button){
+      button.disabled=false;
+      button.textContent="Pay with PayPal";
+    }
+  }
+}
+
+
+function escapeHtml(value){
+
+  return String(value ?? "")
+    .replace(/[&<>"']/g,char=>{
+
+      return {
+        "&":"&amp;",
+        "<":"&lt;",
+        ">":"&gt;",
+        '"':"&quot;",
+        "'":"&#039;"
+      }[char];
+
+    });
+}
+
+
+updateCart();
+
+</script>
+
+const colors = [
+  ["White","#f5f5f5"],
+  ["Black","#050505"],
+  ["Orange","#ff6a00"],
+  ["Yellow","#ffd21c"],
+  ["Red","#e62929"],
+  ["Pink","#ff4fa0"],
+  ["Green","#18c94a"],
+  ["Blue","#1677d2"],
+  ["Gray","#80838a"]
+];
+
+let cart = [];
+
+let custom = {
+  base:"White",
+  switch1:"White",
+  switch2:"White",
+  size:"Small",
+  price:6
+};
+
+function makeSwatches(container,onPick){
+  colors.forEach(([name,hex],i)=>{
+    const button=document.createElement("button");
     button.type="button";
     button.className="swatch"+(i===0?" selected":"");
     button.style.background=hex;
