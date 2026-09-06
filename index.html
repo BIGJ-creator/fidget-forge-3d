@@ -26,12 +26,11 @@ section{padding:55px 0}h2{text-align:center;font-size:34px;margin:0 0 12px}.sect
 .product-img{height:210px;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 35%,#30284d,#171722 65%);font-size:70px}
 .cardbody{padding:18px}.card h3{margin:0 0 7px;font-size:20px}.desc{color:var(--muted);font-size:14px;min-height:42px}.price{font-size:22px;font-weight:900;margin:15px 0}
 .colors{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 2px}
-.select-wrap{position:relative;margin-top:10px}
-.color-select{width:100%;padding:14px 44px 14px 14px;border-radius:12px;border:1px solid var(--border);background:#0d0d15;color:white;font:inherit;font-weight:700;cursor:pointer;appearance:auto}
 .swatch{width:30px;height:30px;border-radius:50%;border:2px solid #3b3b4c;cursor:pointer}
 .swatch.selected{border-color:white;box-shadow:0 0 0 2px #8b5cf6}
 .colorname{font-size:13px;color:#a9a9bb;margin:5px 0 8px}
 .buy{width:100%;padding:12px;border:0;border-radius:11px;background:white;color:#101018;font-weight:900;cursor:pointer}
+.buy:hover{opacity:.9}
 .info{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px}
 .info div{background:#12121d;border:1px solid var(--border);border-radius:16px;padding:22px}.info b{display:block;margin-bottom:8px}.info p{color:var(--muted);margin:0;line-height:1.5}
 footer{border-top:1px solid var(--border);padding:35px 0;color:var(--muted);text-align:center;margin-top:30px}
@@ -47,14 +46,21 @@ textarea{min-height:90px}.order{width:100%;border:0;background:var(--accent);col
 .custom-options h4{margin:0 0 5px}.size-row{display:flex;gap:8px;flex-wrap:wrap}
 .size{padding:9px 13px;border:1px solid var(--border);background:#0d0d15;color:white;border-radius:10px;cursor:pointer}
 .size.selected{border-color:white;box-shadow:0 0 0 2px #8b5cf6}
+.shipping-box{margin:14px 0;padding:14px;border:1px solid var(--border);border-radius:12px;background:#12121d}
+.shipping-box strong{display:block;margin-bottom:4px}
 @media(max-width:650px){.navlinks{display:none}.hero{padding-top:65px}h1{letter-spacing:-2px}}
 </style>
 </head>
 <body>
+
 <nav>
   <div class="container navin">
     <a class="logo" href="#">Fidget<span>Forge</span> 3D</a>
-    <div class="navlinks"><a href="#shop">Shop</a><a href="#why">Why us</a><a href="#order">Order</a></div>
+    <div class="navlinks">
+      <a href="#shop">Shop</a>
+      <a href="#why">Why us</a>
+      <a href="#order">Order</a>
+    </div>
     <button class="cartbtn" onclick="openCart()">🛒 Cart (<span id="count">0</span>)</button>
   </div>
 </nav>
@@ -69,152 +75,178 @@ textarea{min-height:90px}.order{width:100%;border:0;background:var(--accent);col
 </header>
 
 <section id="shop">
-<div class="container">
-<h2>Shop the collection</h2>
-<p class="sectionsub">More designs can be added as the business grows.</p>
-<div class="grid">
+  <div class="container">
+    <h2>Shop the collection</h2>
+    <p class="sectionsub">More designs can be added as the business grows.</p>
 
-<article class="card">
-<div class="product-img">⌨️</div>
-<div class="cardbody">
-<h3>Keyboard Clicker</h3><p class="desc">A compact, satisfying button fidget.</p><div class="price">$5.00</div>
-<div class="colorname">Color: <span id="color1">White</span></div>
-<div class="colors" data-group="1"></div>
-<button class="buy" onclick="addProduct('Keyboard Clicker',5,'color1')">Add to cart</button>
-</div></article>
+    <div class="grid">
 
-<article class="card">
-<div class="product-img">🌀</div>
-<div class="cardbody">
-<h3>Infinity Fidget</h3><p class="desc">Smooth movement in a pocket-sized design.</p><div class="price">$6.00</div>
-<div class="colorname">Color: <span id="color2">White</span></div>
-<div class="colors" data-group="2"></div>
-<button class="buy" onclick="addProduct('Infinity Fidget',6,'color2')">Add to cart</button>
-</div></article>
+      <article class="card">
+        <div class="product-img">⌨️</div>
+        <div class="cardbody">
+          <h3>Keyboard Clicker</h3>
+          <p class="desc">A compact, satisfying button fidget.</p>
+          <div class="price">$5.00</div>
+          <div class="colorname">Color: <span id="color1">White</span></div>
+          <div class="colors" data-group="1"></div>
+          <button class="buy" onclick="addProduct('Keyboard Clicker',5,'color1')">Add to cart</button>
+        </div>
+      </article>
 
-<article class="card">
-<div class="product-img">🐍</div>
-<div class="cardbody">
-<h3>Flexi Fidget</h3><p class="desc">A fun articulated print that moves in your hand.</p><div class="price">$7.00</div>
-<div class="colorname">Color: <span id="color3">White</span></div>
-<div class="colors" data-group="3"></div>
-<button class="buy" onclick="addProduct('Flexi Fidget',7,'color3')">Add to cart</button>
-</div></article>
+      <article class="card">
+        <div class="product-img">🌀</div>
+        <div class="cardbody">
+          <h3>Infinity Fidget</h3>
+          <p class="desc">Smooth movement in a pocket-sized design.</p>
+          <div class="price">$6.00</div>
+          <div class="colorname">Color: <span id="color2">White</span></div>
+          <div class="colors" data-group="2"></div>
+          <button class="buy" onclick="addProduct('Infinity Fidget',6,'color2')">Add to cart</button>
+        </div>
+      </article>
 
-<article class="card">
-<div class="product-img">🎮</div>
-<div class="cardbody">
-<h3>Custom Keychain</h3><p class="desc">Choose the base, top switch, bottom switch, filament colors, and size.</p>
-<div class="price">$6.00</div>
+      <article class="card">
+        <div class="product-img">🐍</div>
+        <div class="cardbody">
+          <h3>Flexi Fidget</h3>
+          <p class="desc">A fun articulated print that moves in your hand.</p>
+          <div class="price">$7.00</div>
+          <div class="colorname">Color: <span id="color3">White</span></div>
+          <div class="colors" data-group="3"></div>
+          <button class="buy" onclick="addProduct('Flexi Fidget',7,'color3')">Add to cart</button>
+        </div>
+      </article>
 
-<div class="custom-options">
-<h4>Base color</h4>
-<div class="select-wrap">
-<select class="color-select" id="baseSelect" onchange="pickCustomSelect('base',this.value)">
-<option>Black</option><option>White</option><option>Orange</option><option>Yellow</option><option>Red</option><option>Pink</option><option>Green</option><option>Blue</option><option>Gray</option>
-</select>
-</div>
-</div>
+      <article class="card">
+        <div class="product-img">🎮</div>
+        <div class="cardbody">
+          <h3>Custom Keychain</h3>
+          <p class="desc">Choose the base, top switch, bottom switch, filament colors, and size.</p>
+          <div class="price">$6.00+</div>
 
-<div class="custom-options">
-<h4>Switch 1 (top)</h4>
-<div class="select-wrap">
-<select class="color-select" id="switch1Select" onchange="pickCustomSelect('switch1',this.value)">
-<option>Black</option><option>White</option><option>Orange</option><option>Yellow</option><option>Red</option><option>Pink</option><option>Green</option><option>Blue</option><option>Gray</option>
-</select>
-</div>
-</div>
+          <div class="custom-options">
+            <h4>Base color</h4>
+            <div class="select-wrap">
+              <select class="color-select" id="baseSelect" onchange="pickCustomSelect('base',this.value)">
+                <option>White</option><option>Black</option><option>Orange</option><option>Yellow</option>
+                <option>Red</option><option>Pink</option><option>Green</option><option>Blue</option><option>Gray</option>
+              </select>
+            </div>
+          </div>
 
-<div class="custom-options">
-<h4>Switch 2 (bottom)</h4>
-<div class="select-wrap">
-<select class="color-select" id="switch2Select" onchange="pickCustomSelect('switch2',this.value)">
-<option>Black</option><option>White</option><option>Orange</option><option>Yellow</option><option>Red</option><option>Pink</option><option>Green</option><option>Blue</option><option>Gray</option>
-</select>
-</div>
-</div>
+          <div class="custom-options">
+            <h4>Switch 1 (top)</h4>
+            <div class="select-wrap">
+              <select class="color-select" id="switch1Select" onchange="pickCustomSelect('switch1',this.value)">
+                <option>White</option><option>Black</option><option>Orange</option><option>Yellow</option>
+                <option>Red</option><option>Pink</option><option>Green</option><option>Blue</option><option>Gray</option>
+              </select>
+            </div>
+          </div>
 
-<div class="custom-options">
-<h4>Size: <span id="customSize">Small</span> — $<span id="customPrice">6.00</span></h4>
-<div class="size-row">
-<button class="size selected" onclick="pickSize('Small',6,this)">Small — $6</button>
-<button class="size" onclick="pickSize('Medium',7,this)">Medium — $7</button>
-<button class="size" onclick="pickSize('Large',8,this)">Large — $8</button>
-</div>
-</div>
+          <div class="custom-options">
+            <h4>Switch 2 (bottom)</h4>
+            <div class="select-wrap">
+              <select class="color-select" id="switch2Select" onchange="pickCustomSelect('switch2',this.value)">
+                <option>White</option><option>Black</option><option>Orange</option><option>Yellow</option>
+                <option>Red</option><option>Pink</option><option>Green</option><option>Blue</option><option>Gray</option>
+              </select>
+            </div>
+          </div>
 
-<button class="buy" onclick="addCustom()">Add to cart</button>
-</div></article>
+          <div class="custom-options">
+            <h4>Size: <span id="customSize">Small</span> — $<span id="customPrice">6.00</span></h4>
+            <div class="size-row">
+              <button class="size selected" onclick="pickSize('Small',6,this)">Small — $6</button>
+              <button class="size" onclick="pickSize('Medium',7,this)">Medium — $7</button>
+              <button class="size" onclick="pickSize('Large',8,this)">Large — $8</button>
+            </div>
+          </div>
 
-</div>
-</div>
+          <button class="buy" onclick="addCustom()">Add to cart</button>
+        </div>
+      </article>
+
+    </div>
+  </div>
 </section>
 
 <section id="why">
-<div class="container">
-<h2>Why Fidget Forge?</h2>
-<p class="sectionsub">Small prints. Big fun.</p>
-<div class="info">
-<div><b>🎨 Lots of colors</b><p>Choose from the filament colors available in the shop.</p></div>
-<div><b>🖨️ 3D printed</b><p>Every item is printed to order.</p></div>
-<div><b>⚙️ Custom options</b><p>Build your custom keychain with three color choices and different sizes.</p></div>
-</div>
-</div>
+  <div class="container">
+    <h2>Why Fidget Forge?</h2>
+    <p class="sectionsub">Small prints. Big fun.</p>
+    <div class="info">
+      <div><b>🎨 Lots of colors</b><p>Choose from the filament colors available in the shop.</p></div>
+      <div><b>🖨️ 3D printed</b><p>Every item is printed to order.</p></div>
+      <div><b>⚙️ Custom options</b><p>Build your custom keychain with three color choices and different sizes.</p></div>
+    </div>
+  </div>
 </section>
 
 <section id="order">
-<div class="container">
-<h2>Place an order</h2>
-<p class="sectionsub">Add your items to the cart, then enter your information.</p>
-</div>
+  <div class="container">
+    <h2>Place an order</h2>
+    <p class="sectionsub">Add your items to the cart, then enter your information.</p>
+  </div>
 </section>
 
 <footer>
-<div class="container">© 2026 Fidget Forge 3D • Made with care</div>
+  <div class="container">© 2026 Fidget Forge 3D • Made with care</div>
 </footer>
 
 <div class="modal" id="cartModal" onclick="if(event.target===this)closeCart()">
-<div class="modalbox">
-<div class="modalhead"><h2>Your cart</h2><button class="close" onclick="closeCart()">×</button></div>
-<div id="cartItems"></div>
-<div class="total">Total: $<span id="total">0.00</span></div>
-<div id="checkoutForm">
-<label>Name</label>
-<input id="customerName" placeholder="Your name">
+  <div class="modalbox">
+    <div class="modalhead">
+      <h2>Your cart</h2>
+      <button class="close" onclick="closeCart()">×</button>
+    </div>
 
-<label>Email</label>
-<input id="customerEmail" type="email" placeholder="Your email">
+    <div id="cartItems"></div>
 
-<label>Shipping Address</label>
-<input id="shippingAddress" placeholder="Street address">
+    <div class="shipping-box">
+      <strong>📦 Shipping</strong>
+      <span class="small">$4.99 flat-rate shipping</span>
+    </div>
 
-<label>City</label>
-<input id="shippingCity" placeholder="City">
+    <div class="total">Total: $<span id="total">0.00</span></div>
 
-<label>State</label>
-<input id="shippingState" placeholder="State">
+    <div id="checkoutForm">
+      <label>Name</label>
+      <input id="customerName" placeholder="Your name">
 
-<label>ZIP Code</label>
-<input id="shippingZip" placeholder="ZIP code">
+      <label>Email</label>
+      <input id="customerEmail" type="email" placeholder="Your email">
 
-<label>Order notes</label>
-<textarea id="customerNotes" placeholder="Anything you'd like us to know?"></textarea>
+      <label>Shipping Address</label>
+      <input id="shippingAddress" placeholder="Street address">
 
-<button class="order" onclick="placeOrder()">Pay with PayPal</button>
+      <label>City</label>
+      <input id="shippingCity" placeholder="City">
 
-<p class="small">
-Shipping: $4.99 flat rate. Your shipping address and order details are sent with the order.
-</p>
-</div>
-<p class="small">Your selected colors, sizes, and order details are sent with the order.</p>
-</div>
-</div>
+      <label>State</label>
+      <input id="shippingState" placeholder="State">
+
+      <label>ZIP Code</label>
+      <input id="shippingZip" placeholder="ZIP code" inputmode="numeric">
+
+      <label>Order notes</label>
+      <textarea id="customerNotes" placeholder="Anything you'd like us to know?"></textarea>
+
+      <button class="order" onclick="placeOrder()">Pay with PayPal</button>
+
+      <p class="small">
+        Your order details and shipping address are sent with the order notification.
+      </p>
+    </div>
+  </div>
 </div>
 
 <script>
-const colors=[
+"use strict";
+
+const colors = [
   ["White","#f5f5f5"],
-  ["Black","#111111"],
+  ["Black","#050505"],
   ["Orange","#ff6a00"],
   ["Yellow","#ffd21c"],
   ["Red","#e62929"],
@@ -224,27 +256,48 @@ const colors=[
   ["Gray","#80838a"]
 ];
 
-let cart=[];
-let custom={base:"White",switch1:"White",switch2:"White",size:"Small",price:6};
+let cart = [];
+
+let custom = {
+  base:"White",
+  switch1:"White",
+  switch2:"White",
+  size:"Small",
+  price:6
+};
 
 function makeSwatches(container,onPick){
   colors.forEach(([name,hex],i)=>{
-    const b=document.createElement("button");
-    b.className="swatch"+(i===0?" selected":"");
-    b.style.background=hex;
-    b.title=name;
-    b.setAttribute("aria-label",name);
-    b.onclick=()=>onPick(name,b);
-    container.appendChild(b);
+    const button=document.createElement("button");
+    button.type="button";
+    button.className="swatch"+(i===0?" selected":"");
+    button.style.background=hex;
+    button.title=name;
+    button.setAttribute("aria-label",name);
+
+    if(name==="White"){
+      button.style.boxShadow=i===0?"0 0 0 2px #8b5cf6":"";
+    }
+
+    button.onclick=()=>{
+      onPick(name,button);
+    };
+
+    container.appendChild(button);
   });
 }
 
-document.querySelectorAll(".colors[data-group]").forEach(el=>{
-  const id=el.dataset.group;
-  makeSwatches(el,(name,btn)=>{
+document.querySelectorAll(".colors[data-group]").forEach(container=>{
+  const id=container.dataset.group;
+
+  makeSwatches(container,(name,button)=>{
     document.getElementById("color"+id).textContent=name;
-    el.querySelectorAll(".swatch").forEach(x=>x.classList.remove("selected"));
-    btn.classList.add("selected");
+
+    container.querySelectorAll(".swatch").forEach(item=>{
+      item.classList.remove("selected");
+    });
+
+    button.classList.add("selected");
   });
 });
 
@@ -252,17 +305,29 @@ function pickCustomSelect(key,name){
   custom[key]=name;
 }
 
+function pickSize(size,price,button){
+  custom.size=size;
+  custom.price=price;
 
-function pickSize(size,price,btn){
-  custom.size=size;custom.price=price;
   document.getElementById("customSize").textContent=size;
   document.getElementById("customPrice").textContent=price.toFixed(2);
-  document.querySelectorAll(".size").forEach(x=>x.classList.remove("selected"));
-  btn.classList.add("selected");
+
+  document.querySelectorAll(".size").forEach(item=>{
+    item.classList.remove("selected");
+  });
+
+  button.classList.add("selected");
 }
 
 function addProduct(name,price,colorId){
-  cart.push({name,price,color:document.getElementById(colorId).textContent});
+  const selectedColor=document.getElementById(colorId).textContent;
+
+  cart.push({
+    name:name,
+    price:price,
+    color:selectedColor
+  });
+
   updateCart();
   alert(name+" added to cart!");
 }
@@ -277,29 +342,57 @@ function addCustom(){
     size:custom.size,
     color:`Base: ${custom.base}, Top: ${custom.switch1}, Bottom: ${custom.switch2}`
   });
+
   updateCart();
   alert("Custom Keychain added to cart!");
 }
 
 function updateCart(){
   document.getElementById("count").textContent=cart.length;
+
   const box=document.getElementById("cartItems");
+
   if(!cart.length){
     box.innerHTML='<p class="small">Your cart is empty.</p>';
   }else{
-    box.innerHTML=cart.map((item,i)=>`
+    box.innerHTML=cart.map((item,index)=>`
       <div class="cartitem">
-        <div><b>${escapeHtml(item.name)}</b><div class="small">${escapeHtml(item.color||"")}</div></div>
-        <div>$${item.price.toFixed(2)} <button class="remove" onclick="removeItem(${i})">Remove</button></div>
-      </div>`).join("");
+        <div>
+          <b>${escapeHtml(item.name)}</b>
+          <div class="small">${escapeHtml(item.color||"")}</div>
+        </div>
+
+        <div>
+          $${Number(item.price).toFixed(2)}
+          <button class="remove" onclick="removeItem(${index})">Remove</button>
+        </div>
+      </div>
+    `).join("");
   }
-  document.getElementById("total").textContent=cart.reduce((sum,x)=>sum+x.price,0).toFixed(2);
+
+  const itemTotal=cart.reduce((sum,item)=>{
+    return sum+Number(item.price);
+  },0);
+
+  const shipping=cart.length?4.99:0;
+  const grandTotal=itemTotal+shipping;
+
+  document.getElementById("total").textContent=grandTotal.toFixed(2);
 }
 
-function removeItem(i){cart.splice(i,1);updateCart()}
+function removeItem(index){
+  cart.splice(index,1);
+  updateCart();
+}
 
-function openCart(){updateCart();document.getElementById("cartModal").classList.add("open")}
-function closeCart(){document.getElementById("cartModal").classList.remove("open")}
+function openCart(){
+  updateCart();
+  document.getElementById("cartModal").classList.add("open");
+}
+
+function closeCart(){
+  document.getElementById("cartModal").classList.remove("open");
+}
 
 async function placeOrder(){
   if(!cart.length){
@@ -317,12 +410,12 @@ async function placeOrder(){
 
   const notes=document.getElementById("customerNotes").value.trim();
 
-  if(!name || !email){
+  if(!name||!email){
     alert("Please enter your name and email.");
     return;
   }
 
-  if(!address || !city || !state || !zip){
+  if(!address||!city||!state||!zip){
     alert("Please enter your complete shipping address.");
     return;
   }
@@ -334,10 +427,10 @@ async function placeOrder(){
         "Content-Type":"application/json"
       },
       body:JSON.stringify({
-        cart,
-        name,
-        email,
-        notes,
+        cart:cart,
+        name:name,
+        email:email,
+        notes:notes,
 
         shippingAddress:{
           address_line_1:address,
@@ -353,7 +446,7 @@ async function placeOrder(){
 
     if(!response.ok){
       throw new Error(
-        data.error || "Could not create PayPal order."
+        data.error||"Could not create PayPal order."
       );
     }
 
@@ -373,61 +466,26 @@ async function placeOrder(){
     console.error(error);
 
     alert(
-      error.message ||
+      error.message||
       "Something went wrong."
     );
   }
 }
-  if(!cart.length){
-    alert("Your cart is empty.");
-    return;
-  }
 
-  const name=document.getElementById("customerName").value.trim();
-  const email=document.getElementById("customerEmail").value.trim();
-  const notes=document.getElementById("customerNotes").value.trim();
-
-  if(!name||!email){
-    alert("Please enter your name and email.");
-    return;
-  }
-
-  try{
-    const response=await fetch("/api/create-order",{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({
-        cart,
-        name,
-        email,
-        notes
-      })
-    });
-
-    const data=await response.json();
-
-    if(!response.ok){
-      throw new Error(data.error||"Could not create PayPal order.");
-    }
-
-    const approvalLink=data.links?.find(link=>link.rel==="approve");
-
-    if(!approvalLink){
-      throw new Error("PayPal approval link was not returned.");
-    }
-
-    window.location.href=approvalLink.href;
-  }catch(error){
-    console.error(error);
-    alert(error.message||"Something went wrong.");
-  }
-}
-
-function escapeHtml(s){
-  return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+function escapeHtml(value){
+  return String(value??"").replace(/[&<>"']/g,char=>{
+    return {
+      "&":"&amp;",
+      "<":"&lt;",
+      ">":"&gt;",
+      '"':"&quot;",
+      "'":"&#039;"
+    }[char];
+  });
 }
 
 updateCart();
 </script>
+
 </body>
 </html>
