@@ -228,17 +228,19 @@ module.exports = async (req, res) => {
       total
     };
 
-    const approvalLink =
-      data.links?.find(
-        link => link.rel === "approve"
-      );
+  const approvalLink = data.links?.find(
+  link =>
+    link.rel === "approve" ||
+    link.rel === "payer-action"
+);
 
-    if (!approvalLink) {
-      throw new Error(
-        "PayPal approval link was not returned."
-      );
-    }
+if (!approvalLink) {
+  console.error("PayPal response:", data);
 
+  throw new Error(
+    "PayPal checkout link was not returned."
+  );
+}
     return res.status(200).json({
       id: data.id,
       links: data.links
