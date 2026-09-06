@@ -6,7 +6,6 @@ const PRICES = {
   "Keyboard Clicker": 5,
   "Infinity Fidget": 6,
   "Flexi Fidget": 7,
-
   "Custom Keychain": {
     Small: 6,
     Medium: 7,
@@ -14,97 +13,63 @@ const PRICES = {
   }
 };
 
-
-// ===============================
-// CALCULATE ITEM TOTAL
-// ===============================
-
 function calculateItemsTotal(cart) {
   if (!Array.isArray(cart) || cart.length === 0) {
     throw new Error("Cart is empty.");
   }
 
   return cart.reduce((total, item) => {
-
     if (!item || !item.name) {
       throw new Error("Invalid cart item.");
     }
 
-    // Custom Keychain
     if (item.name === "Custom Keychain") {
-
       const size = item.size || "Small";
-
-      const price =
-        PRICES["Custom Keychain"][size];
+      const price = PRICES["Custom Keychain"][size];
 
       if (price === undefined) {
-        throw new Error(
-          "Invalid custom keychain size."
-        );
+        throw new Error("Invalid custom keychain size.");
       }
 
       return total + price;
     }
 
-    // Normal products
     if (PRICES[item.name] === undefined) {
-      throw new Error(
-        `Invalid product: ${item.name}`
-      );
+      throw new Error(`Invalid product: ${item.name}`);
     }
 
     return total + PRICES[item.name];
-
   }, 0);
 }
 
-
-// ===============================
-// PAYPAL ACCESS TOKEN
-// ===============================
-
 async function getAccessToken() {
-
   if (
     !process.env.PAYPAL_CLIENT_ID ||
     !process.env.PAYPAL_CLIENT_SECRET
   ) {
-    throw new Error(
-      "PayPal environment variables are missing."
-    );
+    throw new Error("PayPal environment variables are missing.");
   }
 
-  const credentials = Buffer
-    .from(
-      `${process.env.PAYPAL_CLIENT_ID}:${process.env.PAYPAL_CLIENT_SECRET}`
-    )
-    .toString("base64");
+  const credentials = Buffer.from(
+    `${process.env.PAYPAL_CLIENT_ID}:${process.env.PAYPAL_CLIENT_SECRET}`
+  ).toString("base64");
 
   const response = await fetch(
     `${PAYPAL_API}/v1/oauth2/token`,
     {
       method: "POST",
-
       headers: {
         Authorization: `Basic ${credentials}`,
-        "Content-Type":
-          "application/x-www-form-urlencoded"
+        "Content-Type": "application/x-www-form-urlencoded"
       },
-
-      body:
-        "grant_type=client_credentials"
+      body: "grant_type=client_credentials"
     }
   );
 
   const data = await response.json();
 
   if (!response.ok) {
-
-    console.error(
-      "PayPal authentication error:",
-      data
-    );
+    console.error("PAYPAL TOKEN ERROR:", data);
 
     throw new Error(
       data.error_description ||
@@ -115,15 +80,9 @@ async function getAccessToken() {
   return data.access_token;
 }
 
-
-// ===============================
-// CREATE ORDER
-// ===============================
-
 module.exports = async (req, res) => {
 
   if (req.method !== "POST") {
-
     return res.status(405).json({
       error: "Method not allowed"
     });
@@ -139,293 +98,224 @@ module.exports = async (req, res) => {
       shippingAddress
     } = req.body || {};
 
-
-    // ===============================
-    // CHECK CUSTOMER INFORMATION
-    // ===============================
-
     if (!name || !email) {
-
       return res.status(400).json({
-        error:
-          "Name and email are required."
+        error: "Name and email are required."
       });
     }
 
-
-    // ===============================
-    // CHECK SHIPPING ADDRESS
-    // ===============================
-
-    if (
-      !shippingAddress ||
-      !shippingAddress.address_line_1 ||
-      !shippingAddress.admin_area_2 ||
-      !shippingAddress.admin_area_1 ||
-      !shippingAddress.postal_code
-    ) {
-
+    if (!shippingAddress) {
       return res.status(400).json({
-        error:
-          "Complete shipping address is required."
+        error: "Shipping address is required."
       });
     }
 
+    const itemsTotal = calculateItemsTotal(cart);
 
-    // ===============================
-    // CALCULATE PRICE
-    // ===============================
+    const shipping = SHIPPING_COST;
 
-    const itemsTotal =
-      calculateItemsTotal(cart);
+    const total = itemsTotal + shipping;
 
-    const shipping =
-      SHIPPING_COST;
-
-    const total =
-      itemsTotal + shipping;
-
-
-    // ===============================
-    // GET PAYPAL TOKEN
-    // ===============================
-
-    const accessToken =
-      await getAccessToken();
-
-
-    // ===============================
-    // WEBSITE URL
-    // ===============================
+    const accessToken = await getAccessToken();
 
     const baseUrl =
       process.env.SITE_URL ||
       `https://${req.headers.host}`;
 
+    console.log("CREATING PAYPAL ORDER...");
+    console.log("TOTAL:", total);
+    console.log("BASE URL:", baseUrl);
 
-    // ===============================
-    // CREATE PAYPAL ORDER
-    // ===============================
+    const response = await fetch(
+      `${PAYPAL_API}/v2/checkout/orders`,
+      {
+        method: "POST",
 
-    const paypalResponse =
-      await fetch(
-        `${PAYPAL_API}/v2/checkout/orders`,
-        {
-          method: "POST",
+        headers: {
+          Authorization:
+            `Bearer ${accessToken}`,
 
-          headers: {
-            Authorization:
-              `Bearer ${accessToken}`,
+          "Content-Type":
+            "application/json",
 
-            "Content-Type":
-              "application/json",
+          "Prefer":
+            "return=representation"
+        },
 
-            "Prefer":
-              "return=representation"
+        body: JSON.stringify({
+
+          intent: "CAPTURE",
+
+          payment_source: {
+            paypal: {
+              experience_context: {
+
+                brand_name:
+                  "Fidget Forge 3D",
+
+                user_action:
+                  "PAY_NOW",
+
+                shipping_preference:
+                  "SET_PROVIDED_ADDRESS",
+
+                return_url:
+                  `${baseUrl}/api/capture-order`,
+
+                cancel_url:
+                  `${baseUrl}/?payment=cancelled`
+              }
+            }
           },
 
-          body: JSON.stringify({
+          purchase_units: [
 
-            intent: "CAPTURE",
+            {
+              description:
+                "Fidget Forge 3D order",
 
+              amount: {
 
-            // ===========================
-            // PAYPAL CHECKOUT SETTINGS
-            // ===========================
+                currency_code:
+                  "USD",
 
-            payment_source: {
+                value:
+                  total.toFixed(2),
 
-              paypal: {
+                breakdown: {
 
-                experience_context: {
+                  item_total: {
 
-                  brand_name:
-                    "Fidget Forge 3D",
+                    currency_code:
+                      "USD",
 
-                  user_action:
-                    "PAY_NOW",
-
-                  shipping_preference:
-                    "SET_PROVIDED_ADDRESS",
-
-                  return_url:
-                    `${baseUrl}/api/capture-order`,
-
-                  cancel_url:
-                    `${baseUrl}/?payment=cancelled`
-                }
-              }
-            },
-
-
-            // ===========================
-            // PURCHASE
-            // ===========================
-
-            purchase_units: [
-
-              {
-
-                description:
-                  "Fidget Forge 3D order",
-
-
-                amount: {
-
-                  currency_code:
-                    "USD",
-
-                  value:
-                    total.toFixed(2),
-
-
-                  breakdown: {
-
-                    item_total: {
-
-                      currency_code:
-                        "USD",
-
-                      value:
-                        itemsTotal.toFixed(2)
-                    },
-
-
-                    shipping: {
-
-                      currency_code:
-                        "USD",
-
-                      value:
-                        shipping.toFixed(2)
-                    }
-                  }
-                },
-
-
-                // =========================
-                // SHIPPING ADDRESS
-                // =========================
-
-                shipping: {
-
-                  name: {
-
-                    full_name:
-                      name
+                    value:
+                      itemsTotal.toFixed(2)
                   },
 
+                  shipping: {
 
-                  address: {
+                    currency_code:
+                      "USD",
 
-                    address_line_1:
-                      shippingAddress.address_line_1,
-
-                    ...(shippingAddress.address_line_2
-                      ? {
-                          address_line_2:
-                            shippingAddress.address_line_2
-                        }
-                      : {}),
-
-                    admin_area_2:
-                      shippingAddress.admin_area_2,
-
-                    admin_area_1:
-                      shippingAddress.admin_area_1,
-
-                    postal_code:
-                      shippingAddress.postal_code,
-
-                    country_code:
-                      shippingAddress.country_code ||
-                      "US"
+                    value:
+                      shipping.toFixed(2)
                   }
                 }
+              },
+
+              shipping: {
+
+                name: {
+                  full_name:
+                    name
+                },
+
+                address: {
+
+                  address_line_1:
+                    shippingAddress.address_line_1,
+
+                  ...(shippingAddress.address_line_2
+                    ? {
+                        address_line_2:
+                          shippingAddress.address_line_2
+                      }
+                    : {}),
+
+                  admin_area_2:
+                    shippingAddress.admin_area_2,
+
+                  admin_area_1:
+                    shippingAddress.admin_area_1,
+
+                  postal_code:
+                    shippingAddress.postal_code,
+
+                  country_code:
+                    shippingAddress.country_code ||
+                    "US"
+                }
               }
-            ]
-          })
-        }
-      );
+            }
+          ]
+        })
+      }
+    );
 
+    const data = await response.json();
 
-    // ===============================
-    // READ PAYPAL RESPONSE
-    // ===============================
-
-    const data =
-      await paypalResponse.json();
-
+    // ==========================================
+    // SHOW EXACT PAYPAL RESPONSE IN VERCEL LOGS
+    // ==========================================
 
     console.log(
       "PAYPAL STATUS:",
-      paypalResponse.status
+      response.status
     );
 
     console.log(
-      "PAYPAL RESPONSE:",
-      JSON.stringify(
-        data,
-        null,
-        2
-      )
+      "PAYPAL FULL RESPONSE:",
+      JSON.stringify(data, null, 2)
     );
 
-
-    // ===============================
+    // ==========================================
     // PAYPAL ERROR
-    // ===============================
+    // ==========================================
 
-    if (!paypalResponse.ok) {
+    if (!response.ok) {
 
-      throw new Error(
-        data.message ||
-        "PayPal could not create the order."
-      );
+      return res.status(response.status).json({
+
+        error:
+          data.message ||
+          "PayPal error.",
+
+        paypal:
+          data
+      });
     }
 
-
-    // ===============================
-    // FIND CHECKOUT LINK
-    // ===============================
+    // ==========================================
+    // FIND PAYPAL CHECKOUT LINK
+    // ==========================================
 
     const approvalLink =
       Array.isArray(data.links)
         ? data.links.find(
             link =>
-              link.rel ===
-                "payer-action" ||
-              link.rel ===
-                "approve"
+              link.rel === "payer-action" ||
+              link.rel === "approve"
           )
         : null;
 
+    // ==========================================
+    // NO CHECKOUT LINK
+    // ==========================================
 
     if (!approvalLink) {
 
       console.error(
-        "NO PAYPAL CHECKOUT LINK:",
-        JSON.stringify(
-          data,
-          null,
-          2
-        )
+        "NO PAYPAL CHECKOUT LINK."
       );
 
-      throw new Error(
-        "PayPal checkout link was not returned."
-      );
+      return res.status(500).json({
+
+        error:
+          "PayPal checkout link was not returned.",
+
+        paypalResponse:
+          data
+      });
     }
 
-
-    // ===============================
+    // ==========================================
     // SAVE ORDER
-    // ===============================
+    // ==========================================
 
     if (!global.pendingOrders) {
       global.pendingOrders = {};
     }
-
 
     global.pendingOrders[data.id] = {
 
@@ -446,10 +336,9 @@ module.exports = async (req, res) => {
       total
     };
 
-
-    // ===============================
-    // SEND RESULT TO WEBSITE
-    // ===============================
+    // ==========================================
+    // SUCCESS
+    // ==========================================
 
     return res.status(200).json({
 
@@ -463,14 +352,12 @@ module.exports = async (req, res) => {
         data.links
     });
 
-
   } catch (error) {
 
     console.error(
       "CREATE ORDER ERROR:",
       error
     );
-
 
     return res.status(500).json({
 
