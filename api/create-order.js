@@ -241,10 +241,10 @@ if (!approvalLink) {
     "PayPal checkout link was not returned."
   );
 }
-    return res.status(200).json({
-      id: data.id,
-      links: data.links
-    });
+  return res.status(200).json({
+  id: data.id,
+  approvalUrl: approvalLink.href
+});
 
   } catch (error) {
 
