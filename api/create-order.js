@@ -11,6 +11,15 @@ const PRICES = {
   }
 };
 
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 function calculateTotal(cart) {
   if (!Array.isArray(cart) || cart.length === 0) {
     throw new Error("Cart is empty.");
@@ -19,12 +28,13 @@ function calculateTotal(cart) {
   return cart.reduce((total, item) => {
     if (item.name === "Custom Keychain") {
       const size = item.size || "Small";
+      const price = PRICES["Custom Keychain"][size];
 
-      if (PRICES["Custom Keychain"][size] === undefined) {
+      if (price === undefined) {
         throw new Error("Invalid custom keychain size.");
       }
 
-      return total + PRICES["Custom Keychain"][size];
+      return total + price;
     }
 
     if (PRICES[item.name] === undefined) {
@@ -33,43 +43,6 @@ function calculateTotal(cart) {
 
     return total + PRICES[item.name];
   }, 0);
-}
-
-function cleanText(value, fallback = "") {
-  return String(value ?? fallback).replace(/[<>]/g, "").trim();
-}
-
-function getItemDetails(item) {
-  const name = cleanText(item.name);
-
-  if (name === "Custom Keychain") {
-    const size = cleanText(item.size, "Small");
-    const base = cleanText(item.base, "White");
-    const top = cleanText(item.switch1, "White");
-    const bottom = cleanText(item.switch2, "White");
-
-    return `${name} | Base: ${base} | Top: ${top} | Bottom: ${bottom} | Size: ${size}`;
-  }
-
-  const color = cleanText(item.color, "White");
-  return `${name} | Color: ${color}`;
-}
-
-function makeOrderDescription(cart, customerName, customerEmail, notes) {
-  const items = cart.map((item, index) => {
-    return `${index + 1}. ${getItemDetails(item)}`;
-  });
-
-  let description =
-    `Fidget Forge 3D order for ${cleanText(customerName)} ` +
-    `(${cleanText(customerEmail)})\n` +
-    items.join("\n");
-
-  if (notes) {
-    description += `\nNotes: ${cleanText(notes)}`;
-  }
-
-  return description.slice(0, 1200);
 }
 
 async function getAccessToken() {
@@ -97,37 +70,112 @@ async function getAccessToken() {
   return data.access_token;
 }
 
+async function sendOrderEmail({
+  name,
+  email,
+  notes,
+  cart,
+  total
+}) {
+  const itemsHtml = cart
+    .map((item) => {
+      let details = "";
+
+      if (item.name === "Custom Keychain") {
+        details = `
+          <ul>
+            <li><strong>Size:</strong> ${escapeHtml(item.size)}</li>
+            <li><strong>Base:</strong> ${escapeHtml(item.base)}</li>
+            <li><strong>Top switch:</strong> ${escapeHtml(item.switch1)}</li>
+            <li><strong>Bottom switch:</strong> ${escapeHtml(item.switch2)}</li>
+          </ul>
+        `;
+      } else {
+        details = `
+          <p><strong>Color:</strong> ${escapeHtml(item.color || "Not selected")}</p>
+        `;
+      }
+
+      return `
+        <div style="
+          padding:12px;
+          margin-bottom:10px;
+          border:1px solid #ddd;
+          border-radius:8px;
+        ">
+          <strong>${escapeHtml(item.name)}</strong>
+          <p>Price: $${Number(item.price).toFixed(2)}</p>
+          ${details}
+        </div>
+      `;
+    })
+    .join("");
+
+  const emailHtml = `
+    <div style="font-family:Arial,sans-serif;max-width:650px;margin:auto">
+      <h1>🛒 New Fidget Forge 3D Order</h1>
+
+      <h2>Customer</h2>
+      <p><strong>Name:</strong> ${escapeHtml(name)}</p>
+      <p><strong>Email:</strong> ${escapeHtml(email)}</p>
+
+      <h2>Order</h2>
+      ${itemsHtml}
+
+      <h2>Total: $${total.toFixed(2)}</h2>
+
+      <h2>Notes</h2>
+      <p>${escapeHtml(notes || "No notes")}</p>
+    </div>
+  `;
+
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      from: "Fidget Forge 3D <orders@jakeglenn.com>",
+      to: ["jake@jakeglenn.com"],
+      reply_to: email,
+      subject: `🛒 New Fidget Forge Order - $${total.toFixed(2)}`,
+      html: emailHtml
+    })
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    console.error("Resend error:", data);
+    throw new Error(data.message || "Could not send order email.");
+  }
+
+  return data;
+}
+
 module.exports = async (req, res) => {
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+    return res.status(405).json({
+      error: "Method not allowed"
+    });
   }
 
   try {
-    const cart = req.body?.cart;
-    const customerName = cleanText(req.body?.name);
-    const customerEmail = cleanText(req.body?.email);
-    const notes = cleanText(req.body?.notes);
+    const {
+      cart,
+      name,
+      email,
+      notes
+    } = req.body;
 
-    if (!customerName || !customerEmail) {
+    if (!name || !email) {
       return res.status(400).json({
         error: "Name and email are required."
       });
     }
 
-    if (!Array.isArray(cart) || cart.length === 0) {
-      return res.status(400).json({
-        error: "Cart is empty."
-      });
-    }
-
     const total = calculateTotal(cart);
-
-    const orderDescription = makeOrderDescription(
-      cart,
-      customerName,
-      customerEmail,
-      notes
-    );
 
     const accessToken = await getAccessToken();
 
@@ -145,7 +193,7 @@ module.exports = async (req, res) => {
               currency_code: "USD",
               value: total.toFixed(2)
             },
-            description: orderDescription
+            description: "Fidget Forge 3D order"
           }
         ]
       })
@@ -159,10 +207,20 @@ module.exports = async (req, res) => {
       );
     }
 
+    // Send the order notification to you.
+    await sendOrderEmail({
+      name,
+      email,
+      notes,
+      cart,
+      total
+    });
+
     return res.status(200).json({
       id: data.id,
       links: data.links
     });
+
   } catch (error) {
     console.error(error);
 
