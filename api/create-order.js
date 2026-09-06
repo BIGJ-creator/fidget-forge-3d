@@ -228,17 +228,17 @@ module.exports = async (req, res) => {
       total
     };
 
-  const approvalLink = data.links?.find(
+console.log("FULL PAYPAL RESPONSE:", JSON.stringify(data, null, 2));
+
+const approvalLink = data.links?.find(
   link =>
-    link.rel === "approve" ||
-    link.rel === "payer-action"
+    link.rel === "payer-action" ||
+    link.rel === "approve"
 );
 
 if (!approvalLink) {
-  console.error("PayPal response:", data);
-
   throw new Error(
-    "PayPal checkout link was not returned."
+    `PayPal did not return a checkout link. Response: ${JSON.stringify(data)}`
   );
 }
   return res.status(200).json({
