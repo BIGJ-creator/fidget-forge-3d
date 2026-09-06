@@ -246,11 +246,17 @@ module.exports = async (req, res) => {
           Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({
-          intent: "CAPTURE",
+      body: JSON.stringify({
+  intent: "CAPTURE",
 
-          purchase_units: [
-            {
+  application_context: {
+    brand_name: "Fidget Forge 3D",
+    user_action: "PAY_NOW",
+    return_url: "https://www.jakeglenn.com/?payment=success",
+    cancel_url: "https://www.jakeglenn.com/?payment=cancelled"
+  },
+
+  purchase_units: [
               amount: {
                 currency_code: "USD",
                 value: total.toFixed(2),
