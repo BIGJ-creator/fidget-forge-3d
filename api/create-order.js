@@ -1,5 +1,4 @@
 const PAYPAL_API = "https://api-m.sandbox.paypal.com";
-
 const SHIPPING_COST = 4.99;
 
 const PRICES = {
@@ -35,7 +34,7 @@ function calculateItemsTotal(cart) {
     }
 
     if (PRICES[item.name] === undefined) {
-      throw new Error(`Invalid product: ${item.name}`);
+      throw new Error("Invalid product.");
     }
 
     return total + PRICES[item.name];
@@ -69,8 +68,6 @@ async function getAccessToken() {
   const data = await response.json();
 
   if (!response.ok) {
-    console.error("PAYPAL TOKEN ERROR:", data);
-
     throw new Error(
       data.error_description ||
       "PayPal authentication failed."
@@ -81,7 +78,6 @@ async function getAccessToken() {
 }
 
 module.exports = async (req, res) => {
-
   if (req.method !== "POST") {
     return res.status(405).json({
       error: "Method not allowed"
@@ -89,7 +85,6 @@ module.exports = async (req, res) => {
   }
 
   try {
-
     const {
       cart,
       name,
@@ -111,9 +106,7 @@ module.exports = async (req, res) => {
     }
 
     const itemsTotal = calculateItemsTotal(cart);
-
     const shipping = SHIPPING_COST;
-
     const total = itemsTotal + shipping;
 
     const accessToken = await getAccessToken();
@@ -122,97 +115,56 @@ module.exports = async (req, res) => {
       process.env.SITE_URL ||
       `https://${req.headers.host}`;
 
-    console.log("CREATING PAYPAL ORDER...");
-    console.log("TOTAL:", total);
-    console.log("BASE URL:", baseUrl);
-
     const response = await fetch(
       `${PAYPAL_API}/v2/checkout/orders`,
       {
         method: "POST",
 
         headers: {
-          Authorization:
-            `Bearer ${accessToken}`,
-
-          "Content-Type":
-            "application/json",
-
-          "Prefer":
-            "return=representation"
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json"
         },
 
         body: JSON.stringify({
-
           intent: "CAPTURE",
 
-          payment_source: {
-            paypal: {
-              experience_context: {
+          application_context: {
+            brand_name: "Fidget Forge 3D",
+            user_action: "PAY_NOW",
+            shipping_preference: "SET_FROM_PROVIDER",
 
-                brand_name:
-                  "Fidget Forge 3D",
+            return_url:
+              `${baseUrl}/api/capture-order`,
 
-                user_action:
-                  "PAY_NOW",
-
-                shipping_preference:
-                  "SET_PROVIDED_ADDRESS",
-
-                return_url:
-                  `${baseUrl}/api/capture-order`,
-
-                cancel_url:
-                  `${baseUrl}/?payment=cancelled`
-              }
-            }
+            cancel_url:
+              `${baseUrl}/?payment=cancelled`
           },
 
           purchase_units: [
-
             {
-              description:
-                "Fidget Forge 3D order",
-
               amount: {
-
-                currency_code:
-                  "USD",
-
-                value:
-                  total.toFixed(2),
+                currency_code: "USD",
+                value: total.toFixed(2),
 
                 breakdown: {
-
                   item_total: {
-
-                    currency_code:
-                      "USD",
-
-                    value:
-                      itemsTotal.toFixed(2)
+                    currency_code: "USD",
+                    value: itemsTotal.toFixed(2)
                   },
 
                   shipping: {
-
-                    currency_code:
-                      "USD",
-
-                    value:
-                      shipping.toFixed(2)
+                    currency_code: "USD",
+                    value: shipping.toFixed(2)
                   }
                 }
               },
 
               shipping: {
-
                 name: {
-                  full_name:
-                    name
+                  full_name: name
                 },
 
                 address: {
-
                   address_line_1:
                     shippingAddress.address_line_1,
 
@@ -233,10 +185,12 @@ module.exports = async (req, res) => {
                     shippingAddress.postal_code,
 
                   country_code:
-                    shippingAddress.country_code ||
-                    "US"
+                    shippingAddress.country_code || "US"
                 }
-              }
+              },
+
+              description:
+                "Fidget Forge 3D order"
             }
           ]
         })
@@ -245,122 +199,73 @@ module.exports = async (req, res) => {
 
     const data = await response.json();
 
-    // ==========================================
-    // SHOW EXACT PAYPAL RESPONSE IN VERCEL LOGS
-    // ==========================================
-
     console.log(
-      "PAYPAL STATUS:",
-      response.status
-    );
-
-    console.log(
-      "PAYPAL FULL RESPONSE:",
+      "PAYPAL CREATE ORDER RESPONSE:",
       JSON.stringify(data, null, 2)
     );
 
-    // ==========================================
-    // PAYPAL ERROR
-    // ==========================================
-
     if (!response.ok) {
-
-      return res.status(response.status).json({
-
-        error:
-          data.message ||
-          "PayPal error.",
-
-        paypal:
-          data
-      });
-    }
-
-    // ==========================================
-    // FIND PAYPAL CHECKOUT LINK
-    // ==========================================
-
-    const approvalLink =
-      Array.isArray(data.links)
-        ? data.links.find(
-            link =>
-              link.rel === "payer-action" ||
-              link.rel === "approve"
-          )
-        : null;
-
-    // ==========================================
-    // NO CHECKOUT LINK
-    // ==========================================
-
-    if (!approvalLink) {
-
-      console.error(
-        "NO PAYPAL CHECKOUT LINK."
+      throw new Error(
+        data.message ||
+        "Could not create PayPal order."
       );
-
-      return res.status(500).json({
-
-        error:
-          "PayPal checkout link was not returned.",
-
-        paypalResponse:
-          data
-      });
     }
 
-    // ==========================================
-    // SAVE ORDER
-    // ==========================================
+    if (!data.id) {
+      throw new Error(
+        "PayPal did not return an order ID."
+      );
+    }
 
     if (!global.pendingOrders) {
       global.pendingOrders = {};
     }
 
     global.pendingOrders[data.id] = {
-
       cart,
-
       name,
-
       email,
-
       notes,
-
       shippingAddress,
-
       itemsTotal,
-
       shipping,
-
       total
     };
 
-    // ==========================================
-    // SUCCESS
-    // ==========================================
+    const approvalLink =
+      Array.isArray(data.links)
+        ? data.links.find(
+            link =>
+              link.rel === "approve" ||
+              link.rel === "payer-action"
+          )
+        : null;
+
+    if (!approvalLink || !approvalLink.href) {
+      console.error(
+        "NO PAYPAL CHECKOUT LINK:",
+        JSON.stringify(data, null, 2)
+      );
+
+      return res.status(500).json({
+        error:
+          "PayPal created the order, but did not return a checkout link.",
+        paypalOrderId: data.id
+      });
+    }
 
     return res.status(200).json({
-
-      id:
-        data.id,
-
-      approvalUrl:
-        approvalLink.href,
-
-      links:
-        data.links
+      id: data.id,
+      approvalUrl: approvalLink.href
     });
 
   } catch (error) {
-
     console.error(
-      "CREATE ORDER ERROR:",
+      "Create order error:",
       error
     );
 
     return res.status(500).json({
-
       error:
         error.message ||
         "Server error."
