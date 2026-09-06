@@ -241,7 +241,11 @@ function addCustom(){
   cart.push({
     name:"Custom Keychain",
     price:custom.price,
-    color:`Base: ${custom.base}, Top: ${custom.switch1}, Bottom: ${custom.switch2}, Size: ${custom.size}`
+    base:custom.base,
+    switch1:custom.switch1,
+    switch2:custom.switch2,
+    size:custom.size,
+    color:`Base: ${custom.base}, Top: ${custom.switch1}, Bottom: ${custom.switch2}`
   });
   updateCart();
   alert("Custom Keychain added to cart!");
