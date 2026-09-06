@@ -34,7 +34,7 @@ function calculateItemsTotal(cart) {
     }
 
     if (PRICES[item.name] === undefined) {
-      throw new Error("Invalid product.");
+      throw new Error(`Invalid product: ${item.name}`);
     }
 
     return total + PRICES[item.name];
@@ -68,6 +68,8 @@ async function getAccessToken() {
   const data = await response.json();
 
   if (!response.ok) {
+    console.error("PayPal authentication error:", data);
+
     throw new Error(
       data.error_description ||
       "PayPal authentication failed."
@@ -105,6 +107,30 @@ module.exports = async (req, res) => {
       });
     }
 
+    if (!shippingAddress.address_line_1) {
+      return res.status(400).json({
+        error: "Street address is required."
+      });
+    }
+
+    if (!shippingAddress.admin_area_2) {
+      return res.status(400).json({
+        error: "City is required."
+      });
+    }
+
+    if (!shippingAddress.admin_area_1) {
+      return res.status(400).json({
+        error: "State is required."
+      });
+    }
+
+    if (!shippingAddress.postal_code) {
+      return res.status(400).json({
+        error: "ZIP code is required."
+      });
+    }
+
     const itemsTotal = calculateItemsTotal(cart);
     const shipping = SHIPPING_COST;
     const total = itemsTotal + shipping;
@@ -128,17 +154,17 @@ module.exports = async (req, res) => {
         body: JSON.stringify({
           intent: "CAPTURE",
 
-     payment_source: {
-  paypal: {
-    experience_context: {
-      brand_name: "Fidget Forge 3D",
-      user_action: "PAY_NOW",
-      shipping_preference: "SET_PROVIDED_ADDRESS",
-      return_url: `${baseUrl}/api/capture-order`,
-      cancel_url: `${baseUrl}/?payment=cancelled`
-    }
-  }
-},
+          payment_source: {
+            paypal: {
+              experience_context: {
+                brand_name: "Fidget Forge 3D",
+                user_action: "PAY_NOW",
+                shipping_preference: "SET_PROVIDED_ADDRESS",
+                return_url: `${baseUrl}/api/capture-order`,
+                cancel_url: `${baseUrl}/?payment=cancelled`
+              }
+            }
+          },
 
           purchase_units: [
             {
@@ -168,9 +194,12 @@ module.exports = async (req, res) => {
                   address_line_1:
                     shippingAddress.address_line_1,
 
-                  address_line_2:
-                    shippingAddress.address_line_2 ||
-                    undefined,
+                  ...(shippingAddress.address_line_2
+                    ? {
+                        address_line_2:
+                          shippingAddress.address_line_2
+                      }
+                    : {}),
 
                   admin_area_2:
                     shippingAddress.admin_area_2,
@@ -186,8 +215,7 @@ module.exports = async (req, res) => {
                 }
               },
 
-              description:
-                "Fidget Forge 3D order"
+              description: "Fidget Forge 3D order"
             }
           ]
         })
@@ -196,36 +224,45 @@ module.exports = async (req, res) => {
 
     const data = await response.json();
 
-    if (!response.ok) {
-      console.error(
-        "PayPal error:",
-        data
-      );
+    console.log(
+      "PayPal create-order response:",
+      JSON.stringify(data, null, 2)
+    );
 
+    if (!response.ok) {
       throw new Error(
         data.message ||
+        data.details?.[0]?.description ||
         "Could not create PayPal order."
       );
     }
-const approvalLink = data.links?.find(
-  link =>
-    link.rel === "approve" ||
-    link.rel === "payer-action"
-);
 
-if (!approvalLink) {
-  console.error(
-    "FULL PAYPAL RESPONSE:",
-    JSON.stringify(data, null, 2)
-  );
+    if (!data.id) {
+      throw new Error(
+        "PayPal did not return an order ID."
+      );
+    }
 
-  throw new Error(
-    "PayPal checkout link was not returned."
-  );
-}
+    const approvalLink = data.links?.find(
+      link =>
+        link.rel === "payer-action" ||
+        link.rel === "approve"
+    );
+
+    if (!approvalLink || !approvalLink.href) {
+      console.error(
+        "No PayPal checkout link:",
+        JSON.stringify(data, null, 2)
+      );
+
+      throw new Error(
+        "PayPal checkout link was not returned."
+      );
+    }
+
     /*
-      Save the order so capture-order.js
-      can retrieve it after PayPal approval.
+      Save the order information so capture-order.js
+      can use it after PayPal payment.
     */
 
     if (!global.pendingOrders) {
@@ -243,26 +280,12 @@ if (!approvalLink) {
       total
     };
 
-console.log("FULL PAYPAL RESPONSE:", JSON.stringify(data, null, 2));
-
-const approvalLink = data.links?.find(
-  link =>
-    link.rel === "payer-action" ||
-    link.rel === "approve"
-);
-
-if (!approvalLink) {
-  throw new Error(
-    `PayPal did not return a checkout link. Response: ${JSON.stringify(data)}`
-  );
-}
-  return res.status(200).json({
-  id: data.id,
-  approvalUrl: approvalLink.href
-});
+    return res.status(200).json({
+      id: data.id,
+      approvalUrl: approvalLink.href
+    });
 
   } catch (error) {
-
     console.error(
       "Create order error:",
       error
