@@ -1,273 +1,299 @@
-const PAYPAL_API = "https://api-m.sandbox.paypal.com";
-const SHIPPING_COST = 4.99;
-
-const PRICES = {
-  "Keyboard Clicker": 5,
-  "Infinity Fidget": 6,
-  "Flexi Fidget": 7,
-  "Custom Keychain": {
-    Small: 6,
-    Medium: 7,
-    Large: 8
-  }
-};
-
-function calculateItemsTotal(cart) {
-  if (!Array.isArray(cart) || cart.length === 0) {
-    throw new Error("Cart is empty.");
-  }
-
-  return cart.reduce((total, item) => {
-    if (!item || !item.name) {
-      throw new Error("Invalid cart item.");
-    }
-
-    if (item.name === "Custom Keychain") {
-      const size = item.size || "Small";
-      const price = PRICES["Custom Keychain"][size];
-
-      if (price === undefined) {
-        throw new Error("Invalid custom keychain size.");
-      }
-
-      return total + price;
-    }
-
-    if (PRICES[item.name] === undefined) {
-      throw new Error("Invalid product.");
-    }
-
-    return total + PRICES[item.name];
-  }, 0);
-}
-
-async function getAccessToken() {
-  if (
-    !process.env.PAYPAL_CLIENT_ID ||
-    !process.env.PAYPAL_CLIENT_SECRET
-  ) {
-    throw new Error("PayPal environment variables are missing.");
-  }
-
-  const credentials = Buffer.from(
-    `${process.env.PAYPAL_CLIENT_ID}:${process.env.PAYPAL_CLIENT_SECRET}`
-  ).toString("base64");
-
-  const response = await fetch(
-    `${PAYPAL_API}/v1/oauth2/token`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Basic ${credentials}`,
-        "Content-Type": "application/x-www-form-urlencoded"
-      },
-      body: "grant_type=client_credentials"
-    }
-  );
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(
-      data.error_description || "PayPal authentication failed."
-    );
-  }
-
-  return data.access_token;
-}
-
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   if (req.method !== "POST") {
-    return res.status(405).json({
-      error: "Method not allowed"
-    });
+    return res.status(405).json({ error: "Method not allowed" });
   }
 
   try {
     const {
-      cart,
-      name,
-      email,
-      notes,
-      shippingAddress
+      cart = [],
+      name = "",
+      email = "",
+      notes = "",
+      shippingAddress = {}
     } = req.body || {};
 
-    if (!name || !email) {
+    if (!Array.isArray(cart) || cart.length === 0) {
       return res.status(400).json({
-        error: "Name and email are required."
+        error: "Cart is empty."
       });
     }
 
-    if (!shippingAddress) {
-      return res.status(400).json({
-        error: "Shipping address is required."
+    const clientId = process.env.PAYPAL_CLIENT_ID;
+    const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
+
+    if (!clientId || !clientSecret) {
+      console.error("Missing PayPal environment variables.");
+
+      return res.status(500).json({
+        error: "PayPal is not configured correctly."
       });
     }
 
-    const itemsTotal = calculateItemsTotal(cart);
-    const shipping = SHIPPING_COST;
-    const total = itemsTotal + shipping;
+    const paypalBase =
+      process.env.PAYPAL_ENV === "live"
+        ? "https://api-m.paypal.com"
+        : "https://api-m.sandbox.paypal.com";
 
-    const accessToken = await getAccessToken();
+    // Get PayPal access token
+    const authResponse = await fetch(
+      `${paypalBase}/v1/oauth2/token`,
+      {
+        method: "POST",
+        headers: {
+          "Authorization":
+            "Basic " +
+            Buffer.from(
+              `${clientId}:${clientSecret}`
+            ).toString("base64"),
+          "Content-Type":
+            "application/x-www-form-urlencoded"
+        },
+        body: "grant_type=client_credentials"
+      }
+    );
 
-    const baseUrl =
-      process.env.SITE_URL ||
-      `https://${req.headers.host}`;
+    const authText = await authResponse.text();
+
+    if (!authResponse.ok) {
+      console.error("PayPal auth error:", authText);
+
+      return res.status(500).json({
+        error: "Could not connect to PayPal."
+      });
+    }
+
+    const authData = JSON.parse(authText);
+    const accessToken = authData.access_token;
+
+    // Calculate item total
+    const itemTotal = cart.reduce((total, item) => {
+      const price = Number(item.price);
+
+      if (!Number.isFinite(price) || price < 0) {
+        throw new Error("Invalid item price.");
+      }
+
+      return total + price;
+    }, 0);
+
+    const shipping = 4.99;
+    const total = itemTotal + shipping;
+
+    const money = value => Number(value).toFixed(2);
+
+    console.log("CREATING PAYPAL ORDER...");
+    console.log("TOTAL:", money(total));
+
+    // Build PayPal items
+    const items = cart.map(item => {
+      let description = "";
+
+      if (item.color) {
+        description += item.color;
+      }
+
+      if (item.size) {
+        description +=
+          (description ? " | " : "") +
+          `Size: ${item.size}`;
+      }
+
+      return {
+        name: String(item.name || "Fidget").slice(0, 127),
+        quantity: "1",
+        unit_amount: {
+          currency_code: "USD",
+          value: money(Number(item.price))
+        },
+        ...(description
+          ? {
+              description: description.slice(0, 127)
+            }
+          : {})
+      };
+    });
 
     const paypalOrder = {
       intent: "CAPTURE",
-
-      payment_source: {
-        paypal: {
-          experience_context: {
-            brand_name: "Fidget Forge 3D",
-            user_action: "PAY_NOW",
-            shipping_preference: "SET_PROVIDED_ADDRESS",
-            return_url: `${baseUrl}/api/capture-order`,
-            cancel_url: `${baseUrl}/?payment=cancelled`
-          }
-        }
-      },
 
       purchase_units: [
         {
           amount: {
             currency_code: "USD",
-            value: total.toFixed(2),
+            value: money(total),
 
             breakdown: {
               item_total: {
                 currency_code: "USD",
-                value: itemsTotal.toFixed(2)
+                value: money(itemTotal)
               },
 
               shipping: {
                 currency_code: "USD",
-                value: shipping.toFixed(2)
+                value: money(shipping)
               }
             }
           },
 
+          items,
+
           shipping: {
             name: {
-              full_name: name
+              full_name: String(name).slice(0, 300)
             },
 
             address: {
               address_line_1:
-                shippingAddress.address_line_1,
-
-              ...(shippingAddress.address_line_2
-                ? {
-                    address_line_2:
-                      shippingAddress.address_line_2
-                  }
-                : {}),
+                String(
+                  shippingAddress.address_line_1 || ""
+                ).slice(0, 300),
 
               admin_area_2:
-                shippingAddress.admin_area_2,
+                String(
+                  shippingAddress.admin_area_2 || ""
+                ).slice(0, 120),
 
               admin_area_1:
-                shippingAddress.admin_area_1,
+                String(
+                  shippingAddress.admin_area_1 || ""
+                ).slice(0, 300),
 
               postal_code:
-                shippingAddress.postal_code,
+                String(
+                  shippingAddress.postal_code || ""
+                ).slice(0, 60),
 
-              country_code:
-                shippingAddress.country_code || "US"
+              country_code: "US"
             }
-          },
-
-          description: "Fidget Forge 3D order"
+          }
         }
-      ]
+      ],
+
+      application_context: {
+        brand_name: "Fidget Forge 3D",
+        user_action: "PAY_NOW",
+        return_url:
+          "https://www.jakeglenn.com/api/paypal-return",
+        cancel_url:
+          "https://www.jakeglenn.com/?paypal=cancelled"
+      }
     };
 
-    console.log("CREATING PAYPAL ORDER...");
-    console.log("TOTAL:", total.toFixed(2));
-
-    const response = await fetch(
-      `${PAYPAL_API}/v2/checkout/orders`,
+    const orderResponse = await fetch(
+      `${paypalBase}/v2/checkout/orders`,
       {
         method: "POST",
 
         headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`,
+
+          // Helpful for debugging/retries
+          "PayPal-Request-Id":
+            `fidget-${Date.now()}-${Math.random()
+              .toString(36)
+              .slice(2)}`
         },
 
         body: JSON.stringify(paypalOrder)
       }
     );
 
-    const data = await response.json();
+    const responseText = await orderResponse.text();
 
-    console.log("PAYPAL STATUS:", response.status);
+    let data;
+
+    try {
+      data = JSON.parse(responseText);
+    } catch {
+      console.error(
+        "PayPal returned non-JSON:",
+        responseText
+      );
+
+      return res.status(500).json({
+        error: "PayPal returned an invalid response."
+      });
+    }
+
     console.log(
-      "PAYPAL RESPONSE:",
+      "PAYPAL STATUS:",
+      orderResponse.status
+    );
+
+    console.log(
+      "PAYPAL FULL RESPONSE:",
       JSON.stringify(data, null, 2)
     );
 
-    if (!response.ok) {
-      throw new Error(
-        data.message ||
-        "Could not create PayPal order."
-      );
-    }
-
-    if (!data.id) {
-      throw new Error(
-        "PayPal did not return an order ID."
-      );
-    }
-
-    /*
-      Save order information.
-    */
-
-    if (!global.pendingOrders) {
-      global.pendingOrders = {};
-    }
-
-    global.pendingOrders[data.id] = {
-      cart,
-      name,
-      email,
-      notes,
-      shippingAddress,
-      itemsTotal,
-      shipping,
-      total
-    };
-
-    /*
-      PayPal Sandbox is returning "payer-action".
-    */
-
-    const payerAction = Array.isArray(data.links)
-      ? data.links.find(
-          link => link.rel === "payer-action"
-        )
-      : null;
-
-    if (!payerAction || !payerAction.href) {
+    if (!orderResponse.ok) {
       console.error(
-        "NO PAYPAL CHECKOUT LINK:",
+        "PayPal create-order error:",
         JSON.stringify(data, null, 2)
       );
 
-      throw new Error(
-        "PayPal checkout link was not returned."
-      );
+      return res.status(orderResponse.status).json({
+        error:
+          data?.details?.[0]?.description ||
+          data?.message ||
+          "PayPal could not create the order.",
+        details: data?.details || []
+      });
     }
 
-    console.log(
-      "PAYPAL CHECKOUT URL:",
-      payerAction.href
+    /*
+      PayPal's newer API commonly returns:
+
+      rel: "payer-action"
+
+      instead of:
+
+      rel: "approve"
+
+      Your frontend currently searches for "approve",
+      so we create an alias below.
+    */
+
+    const links = Array.isArray(data.links)
+      ? [...data.links]
+      : [];
+
+    const payerAction = links.find(
+      link =>
+        link &&
+        link.rel === "payer-action" &&
+        link.href
     );
+
+    if (payerAction) {
+      links.push({
+        href: payerAction.href,
+        rel: "approve",
+        method: "GET"
+      });
+    }
+
+    if (!payerAction) {
+      console.error(
+        "No PayPal payer-action link:",
+        JSON.stringify(data, null, 2)
+      );
+
+      return res.status(500).json({
+        error:
+          "PayPal approval link was not returned.",
+        paypalOrderId: data.id || null
+      });
+    }
 
     return res.status(200).json({
       id: data.id,
+
+      status: data.status,
+
+      links,
+
+      // Extra easy-to-use approval URL
       approvalUrl: payerAction.href
     });
 
@@ -279,8 +305,8 @@ module.exports = async (req, res) => {
 
     return res.status(500).json({
       error:
-        error.message ||
-        "Server error."
+        error?.message ||
+        "Something went wrong creating the PayPal order."
     });
   }
-};
+}
