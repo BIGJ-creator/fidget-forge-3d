@@ -128,18 +128,14 @@ module.exports = async (req, res) => {
         body: JSON.stringify({
           intent: "CAPTURE",
 
-        payment_source: {
+     payment_source: {
   paypal: {
     experience_context: {
       brand_name: "Fidget Forge 3D",
       user_action: "PAY_NOW",
-shipping_preference: "SET_PROVIDED_ADDRESS",
-
-      return_url:
-        `${baseUrl}/api/capture-order`,
-
-      cancel_url:
-        `${baseUrl}/?payment=cancelled`
+      shipping_preference: "SET_PROVIDED_ADDRESS",
+      return_url: `${baseUrl}/api/capture-order`,
+      cancel_url: `${baseUrl}/?payment=cancelled`
     }
   }
 },
