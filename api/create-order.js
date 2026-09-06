@@ -5,16 +5,16 @@ export default async function handler(req, res) {
 
   try {
     const {
-      cart = [],
-      name = "",
-      email = "",
-      notes = "",
-      shippingAddress = {}
+      cart,
+      name,
+      email,
+      notes,
+      shippingAddress
     } = req.body || {};
 
     if (!Array.isArray(cart) || cart.length === 0) {
       return res.status(400).json({
-        error: "Cart is empty."
+        error: "Your cart is empty."
       });
     }
 
@@ -22,10 +22,8 @@ export default async function handler(req, res) {
     const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
 
     if (!clientId || !clientSecret) {
-      console.error("Missing PayPal environment variables.");
-
       return res.status(500).json({
-        error: "PayPal is not configured correctly."
+        error: "PayPal credentials are missing."
       });
     }
 
@@ -40,7 +38,7 @@ export default async function handler(req, res) {
       {
         method: "POST",
         headers: {
-          "Authorization":
+          Authorization:
             "Basic " +
             Buffer.from(
               `${clientId}:${clientSecret}`
@@ -52,72 +50,81 @@ export default async function handler(req, res) {
       }
     );
 
-    const authText = await authResponse.text();
+    const authData = await authResponse.json();
 
     if (!authResponse.ok) {
-      console.error("PayPal auth error:", authText);
+      console.error("PAYPAL AUTH ERROR:", authData);
 
       return res.status(500).json({
-        error: "Could not connect to PayPal."
+        error: "PayPal authentication failed."
       });
     }
 
-    const authData = JSON.parse(authText);
     const accessToken = authData.access_token;
 
-    // Calculate item total
-    const itemTotal = cart.reduce((total, item) => {
+    // Calculate totals
+    const itemTotal = cart.reduce((sum, item) => {
       const price = Number(item.price);
 
       if (!Number.isFinite(price) || price < 0) {
         throw new Error("Invalid item price.");
       }
 
-      return total + price;
+      return sum + price;
     }, 0);
 
-    const shipping = 4.99;
+    const shipping = cart.length > 0 ? 4.99 : 0;
     const total = itemTotal + shipping;
 
-    const money = value => Number(value).toFixed(2);
+    const money = value =>
+      Number(value).toFixed(2);
 
-    console.log("CREATING PAYPAL ORDER...");
-    console.log("TOTAL:", money(total));
+    // PayPal items
+    const items = cart.map(item => ({
+      name: String(
+        item.name || "Fidget"
+      ).slice(0, 127),
 
-    // Build PayPal items
-    const items = cart.map(item => {
-      let description = "";
+      quantity: "1",
 
-      if (item.color) {
-        description += item.color;
-      }
+      unit_amount: {
+        currency_code: "USD",
+        value: money(item.price)
+      },
 
-      if (item.size) {
-        description +=
-          (description ? " | " : "") +
-          `Size: ${item.size}`;
-      }
+      category: "PHYSICAL_GOODS"
+    }));
 
-      return {
-        name: String(item.name || "Fidget").slice(0, 127),
-        quantity: "1",
-        unit_amount: {
-          currency_code: "USD",
-          value: money(Number(item.price))
-        },
-        ...(description
-          ? {
-              description: description.slice(0, 127)
-            }
-          : {})
-      };
-    });
-
-    const paypalOrder = {
+    // Create PayPal order
+    const orderBody = {
       intent: "CAPTURE",
+
+      payment_source: {
+        paypal: {
+          experience_context: {
+            payment_method_preference:
+              "IMMEDIATE_PAYMENT_REQUIRED",
+
+            landing_page: "LOGIN",
+
+            shipping_preference:
+              "SET_PROVIDED_ADDRESS",
+
+            user_action: "PAY_NOW",
+
+            return_url:
+              "https://www.jakeglenn.com/api/paypal-return",
+
+            cancel_url:
+              "https://www.jakeglenn.com/?paypal=cancelled"
+          }
+        }
+      },
 
       purchase_units: [
         {
+          reference_id: "FIDGET-FORGE-ORDER",
+
           amount: {
             currency_code: "USD",
             value: money(total),
@@ -139,86 +146,69 @@ export default async function handler(req, res) {
 
           shipping: {
             name: {
-              full_name: String(name).slice(0, 300)
+              full_name: String(name || "")
+                .slice(0, 300)
             },
 
             address: {
               address_line_1:
                 String(
-                  shippingAddress.address_line_1 || ""
+                  shippingAddress?.address_line_1 || ""
                 ).slice(0, 300),
 
               admin_area_2:
                 String(
-                  shippingAddress.admin_area_2 || ""
+                  shippingAddress?.admin_area_2 || ""
                 ).slice(0, 120),
 
               admin_area_1:
                 String(
-                  shippingAddress.admin_area_1 || ""
+                  shippingAddress?.admin_area_1 || ""
                 ).slice(0, 300),
 
               postal_code:
                 String(
-                  shippingAddress.postal_code || ""
+                  shippingAddress?.postal_code || ""
                 ).slice(0, 60),
 
               country_code: "US"
             }
           }
         }
-      ],
-
-      application_context: {
-        brand_name: "Fidget Forge 3D",
-        user_action: "PAY_NOW",
-        return_url:
-          "https://www.jakeglenn.com/api/paypal-return",
-        cancel_url:
-          "https://www.jakeglenn.com/?paypal=cancelled"
-      }
+      ]
     };
 
-    const orderResponse = await fetch(
+    console.log("CREATING PAYPAL ORDER...");
+    console.log("TOTAL:", money(total));
+
+    const paypalResponse = await fetch(
       `${paypalBase}/v2/checkout/orders`,
       {
         method: "POST",
 
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${accessToken}`,
+          Authorization:
+            `Bearer ${accessToken}`,
 
-          // Helpful for debugging/retries
+          "Content-Type":
+            "application/json",
+
+          Prefer:
+            "return=representation",
+
           "PayPal-Request-Id":
-            `fidget-${Date.now()}-${Math.random()
-              .toString(36)
-              .slice(2)}`
+            `fidget-${Date.now()}`
         },
 
-        body: JSON.stringify(paypalOrder)
+        body: JSON.stringify(orderBody)
       }
     );
 
-    const responseText = await orderResponse.text();
-
-    let data;
-
-    try {
-      data = JSON.parse(responseText);
-    } catch {
-      console.error(
-        "PayPal returned non-JSON:",
-        responseText
-      );
-
-      return res.status(500).json({
-        error: "PayPal returned an invalid response."
-      });
-    }
+    const data = await paypalResponse.json();
 
     console.log(
       "PAYPAL STATUS:",
-      orderResponse.status
+      paypalResponse.status
     );
 
     console.log(
@@ -226,75 +216,46 @@ export default async function handler(req, res) {
       JSON.stringify(data, null, 2)
     );
 
-    if (!orderResponse.ok) {
-      console.error(
-        "PayPal create-order error:",
-        JSON.stringify(data, null, 2)
-      );
-
-      return res.status(orderResponse.status).json({
+    if (!paypalResponse.ok) {
+      return res.status(paypalResponse.status).json({
         error:
           data?.details?.[0]?.description ||
           data?.message ||
-          "PayPal could not create the order.",
-        details: data?.details || []
+          "PayPal could not create the order."
       });
     }
 
-    /*
-      PayPal's newer API commonly returns:
+    // PayPal currently returns rel="payer-action"
+    const approvalLink =
+      data.links?.find(
+        link =>
+          link.rel === "payer-action" &&
+          link.href
+      );
 
-      rel: "payer-action"
-
-      instead of:
-
-      rel: "approve"
-
-      Your frontend currently searches for "approve",
-      so we create an alias below.
-    */
-
-    const links = Array.isArray(data.links)
-      ? [...data.links]
-      : [];
-
-    const payerAction = links.find(
-      link =>
-        link &&
-        link.rel === "payer-action" &&
-        link.href
-    );
-
-    if (payerAction) {
-      links.push({
-        href: payerAction.href,
-        rel: "approve",
-        method: "GET"
-      });
-    }
-
-    if (!payerAction) {
+    if (!approvalLink) {
       console.error(
-        "No PayPal payer-action link:",
+        "NO PAYER-ACTION LINK:",
         JSON.stringify(data, null, 2)
       );
 
       return res.status(500).json({
         error:
-          "PayPal approval link was not returned.",
-        paypalOrderId: data.id || null
+          "PayPal did not return a checkout link.",
+        orderId: data.id || null,
+        links: data.links || []
       });
     }
 
+    // Send the checkout URL to your website
     return res.status(200).json({
       id: data.id,
 
       status: data.status,
 
-      links,
+      approvalUrl: approvalLink.href,
 
-      // Extra easy-to-use approval URL
-      approvalUrl: payerAction.href
+      links: data.links
     });
 
   } catch (error) {
@@ -306,7 +267,7 @@ export default async function handler(req, res) {
     return res.status(500).json({
       error:
         error?.message ||
-        "Something went wrong creating the PayPal order."
+        "Something went wrong."
     });
   }
 }
